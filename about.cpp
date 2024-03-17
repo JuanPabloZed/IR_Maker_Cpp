@@ -7,6 +7,7 @@ About::About(QWidget *parent)
     , ui(new Ui::About)
 {
     ui->setupUi(this);
+
     QPixmap pix(":/img/irmaker.png");
     int h, w;
     h = ui->label_2->height();
