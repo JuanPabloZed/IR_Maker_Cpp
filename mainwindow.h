@@ -21,7 +21,7 @@ public:
     ~MainWindow();
     //info for processing
     QString sweeppath;
-    QString recorddirpath;
+    QString recordpath;
     QString savepathauto; // for autosave
     QString savepathcstm; // for custom save
 
@@ -39,9 +39,8 @@ private slots:
 
     void on_autosr_check_stateChanged(int arg1);
 
-    void on_files_list_indexesMoved(const QModelIndexList &indexes);
 
-    void on_sweepgen_button_clicked();
+    void on_files_list_clicked(const QModelIndex &index);
 
 private:
     Ui::MainWindow *ui;

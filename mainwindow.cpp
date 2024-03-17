@@ -15,6 +15,12 @@ MainWindow::MainWindow(QWidget *parent)
     // translates .ui file in actual ui
     ui->setupUi(this);
 
+    // initialize the useful paths for no selection detection
+    recordpath = "";
+    sweeppath = "";
+    savepathauto = "";
+    savepathcstm = "";
+
     // set filemodel for the treeview
     QString root = "C:/";
     dirmodel = new QFileSystemModel(this);
@@ -41,10 +47,18 @@ MainWindow::~MainWindow()
 void MainWindow::on_createir_button_clicked()
 {
     // check if everything is ok before computing
-    if (!sweep.isMono()){
-        QMessageBox::critical(this, "Non-mono sweep file", "Sweep file is not mono. Please choose a mono sweep file.");
+    // sweep in mono
+    if (sweeppath != "") {
+        if (!sweep.isMono()){
+            QMessageBox::critical(this, "Non-mono sweep file", "Sweep file is not mono. Please choose a mono sweep file.");
+            return;
+    }
+    } else {
+        QMessageBox::critical(this, "No sweep file selected", "No sweep file has been selected. Please select a sweep file.");
+        // make browsesweep_button's border red ?
         return;
     }
+    // recordings are ok
 
     // compute
 
@@ -64,7 +78,10 @@ void MainWindow::on_browsesweep_button_clicked()
     if (!sweep.isMono()){
         ui->browsesweep_button->setText("Browse sweep file");
         QMessageBox::critical(this,"Sweep file : mono only", "Mono-only sweep files are supported. Please choose a mono file.");
+        ui->createir_button->setEnabled(false);
         return;
+    } else {
+        ui->createir_button->setEnabled(true);
     }
 
     // change button text to file name
@@ -103,14 +120,11 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 }
 
 
-void MainWindow::on_files_list_indexesMoved(const QModelIndexList &indexes)
-{
-    //int a = 5;
-}
 
 
-void MainWindow::on_sweepgen_button_clicked()
+
+void MainWindow::on_files_list_clicked(const QModelIndex &index)
 {
-    int b = 4;
+    recordpath  = filemodel->filePath(index);
 }
 
