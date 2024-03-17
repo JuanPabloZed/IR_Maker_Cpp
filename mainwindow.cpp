@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     // translates .ui file in actual ui
     ui->setupUi(this);
 
+
     // initialize the useful paths for no selection detection
     recordpath = "";
     sweeppath = "";
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     filemodel->setNameFilterDisables(false);
     ui->files_list->setModel(filemodel);
 
+    this->checkall();
 
 }
 // define destructor
@@ -46,6 +48,34 @@ MainWindow::~MainWindow()
 }
 
 ///FUNCTIONS, SLOTS
+
+void MainWindow::checkall(){
+    if (ui->browsesweep_button->text() == "Browse sweep file"
+        || ui->browsesweep_button->text() == ""
+        || ui->beg_freq->text() == "" || ui->beg_freq->text() == "0"
+        || ui->end_freq->text() == "" || ui->beg_freq->text() == "0"
+        || recordpath == ""
+        || ui->srate->text()== "" || ui->srate->text() == "0")
+    { ui->createir_button->setEnabled(false); }
+
+    else if (ui->browsesweep_button->text() != "Browse sweep file"
+         && ui->browsesweep_button->text() != ""
+         && ui->beg_freq->text() != "" && ui->beg_freq->text() != "0"
+         && ui->end_freq->text() != "" && ui->end_freq->text() != "0"
+         && recordpath !=""
+         && ui->srate->text()!= "" && ui->srate->text() != "0")
+    {
+        if (ui->customsave_radio->isChecked()
+            && ui->browseout_button->text() != "" && ui->browseout_button->text() != "Browse output")
+        { ui->createir_button->setEnabled(true); }
+        else if (ui->autosave_radio->isChecked())
+        { ui->createir_button->setEnabled(true); }
+        else
+        { ui->createir_button->setEnabled(false); }
+    }
+}
+
+
 void MainWindow::on_createir_button_clicked()
 {
     // check if everything is ok before computing
@@ -75,16 +105,13 @@ void MainWindow::on_browsesweep_button_clicked()
     if (!sweep.isMono()){
         ui->browsesweep_button->setText("Browse sweep file");
         QMessageBox::critical(this,"Sweep file : mono only", "Mono-only sweep files are supported. Please choose a mono file.");
-        ui->createir_button->setEnabled(false);
         return;
-    } else {
-        ui->createir_button->setEnabled(true);
     }
-
     // change button text to file name
     QFileInfo sweepinfo(sweeppath);
     QString sweepname(sweepinfo.baseName());
     ui->browsesweep_button->setText(sweepname);
+    this->checkall();
 }
 
 
@@ -105,6 +132,7 @@ void MainWindow::on_customsave_radio_toggled(bool checked)
     } else {
         ui->browseout_button->setEnabled(checked);
     }
+    this->checkall();
 }
 
 
@@ -121,12 +149,17 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 void MainWindow::on_files_list_clicked(const QModelIndex &index)
 {
     recordpath  = filemodel->filePath(index);
+    this->checkall();
 }
 
 
 void MainWindow::on_browseout_button_clicked()
 {
     savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", "C://", "WAV files (*.wav)");
+    QStringList list = savepathcstm.split("/");
+    // change button text to file name
+    ui->browseout_button->setText(list[list.size()-1]);
+    this->checkall();
 }
 
 
@@ -136,4 +169,20 @@ void MainWindow::on_about_button_clicked()
     aboutdial.exec();
 
 }
+
+
+void MainWindow::on_beg_freq_textChanged(const QString &arg1)
+{ this->checkall(); }
+
+
+void MainWindow::on_end_freq_textChanged(const QString &arg1)
+{ this->checkall(); }
+
+
+void MainWindow::on_autosave_radio_toggled(bool checked)
+{ this->checkall(); }
+
+
+void MainWindow::on_srate_textChanged(const QString &arg1)
+{ this->checkall(); }
 

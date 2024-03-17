@@ -28,6 +28,7 @@ public:
     // audio data
     AudioFile<int> sweep;
     AudioFile<int> out;
+    void checkall();
 
 private slots:
     void on_createir_button_clicked();
@@ -45,6 +46,14 @@ private slots:
     void on_browseout_button_clicked();
 
     void on_about_button_clicked();
+
+    void on_beg_freq_textChanged(const QString &arg1);
+
+    void on_autosave_radio_toggled(bool checked);
+
+    void on_end_freq_textChanged(const QString &arg1);
+
+    void on_srate_textChanged(const QString &arg1);
 
 private:
     Ui::MainWindow *ui;

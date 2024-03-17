@@ -26,8 +26,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         AudioFile.h
         pffft.c pffft.h
         about.h about.cpp about.ui
-        irmaker.png
         add.qrc
+        img/irmaker.ico
 
     )
 # Define target properties for Android with Qt 6 as:

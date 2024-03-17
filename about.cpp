@@ -8,7 +8,7 @@ About::About(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QPixmap pix(":/img/irmaker.png");
+    QPixmap pix(":/img/img/irmaker.ico");
     int h, w;
     h = ui->label_2->height();
     w = ui->label_2->width();
