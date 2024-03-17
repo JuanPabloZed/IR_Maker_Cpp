@@ -111,6 +111,6 @@ void MainWindow::on_files_list_indexesMoved(const QModelIndexList &indexes)
 
 void MainWindow::on_sweepgen_button_clicked()
 {
-    // open sweep generator window
+    int b = 4;
 }
 
