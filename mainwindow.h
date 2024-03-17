@@ -42,6 +42,10 @@ private slots:
 
     void on_files_list_clicked(const QModelIndex &index);
 
+    void on_browseout_button_clicked();
+
+    void on_about_button_clicked();
+
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *filemodel;

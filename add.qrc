@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>irmaker.png</file>
+    </qresource>
+</RCC>

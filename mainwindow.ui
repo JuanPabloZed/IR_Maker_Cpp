@@ -185,7 +185,11 @@
             <enum>Qt::Horizontal</enum>
            </property>
            <widget class="QTreeView" name="treeView"/>
-           <widget class="QListView" name="files_list"/>
+           <widget class="QListView" name="files_list">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
           </widget>
          </item>
         </layout>

@@ -25,6 +25,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         AudioFile.h
         pffft.c pffft.h
+        about.h about.cpp about.ui
+        irmaker.png
+        add.qrc
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET IR_Maker APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

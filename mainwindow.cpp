@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "about.h"
 #include "AudioFile.h"
 #include <QPushButton>
 #include <QFileDialog>
@@ -30,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // set filemodel for listview
     filemodel = new QFileSystemModel(this);
-    filemodel->setRootPath(root);
+    filemodel->setRootPath("");
     filemodel->setFilter(QDir::NoDotAndDotDot | QDir::Files);
     filemodel->setNameFilters(QStringList()<<"*.wav");
     filemodel->setNameFilterDisables(false);
@@ -44,16 +45,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+///FUNCTIONS, SLOTS
 void MainWindow::on_createir_button_clicked()
 {
     // check if everything is ok before computing
     // sweep in mono
-    if (sweeppath != "") {
-        if (!sweep.isMono()){
-            QMessageBox::critical(this, "Non-mono sweep file", "Sweep file is not mono. Please choose a mono sweep file.");
-            return;
-    }
-    } else {
+    if (sweeppath == "") {
         QMessageBox::critical(this, "No sweep file selected", "No sweep file has been selected. Please select a sweep file.");
         // make browsesweep_button's border red ?
         return;
@@ -93,11 +90,12 @@ void MainWindow::on_browsesweep_button_clicked()
 
 void MainWindow::on_treeView_clicked(const QModelIndex &index)
 {
+    if (!ui->files_list->isEnabled()){
+        ui->files_list->setEnabled(true);
+    }
     QString dirpath = dirmodel->fileInfo(index).absoluteFilePath();
     ui->files_list->setRootIndex(filemodel->setRootPath(dirpath));
 }
-
-
 
 
 void MainWindow::on_customsave_radio_toggled(bool checked)
@@ -120,11 +118,22 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 }
 
 
-
-
-
 void MainWindow::on_files_list_clicked(const QModelIndex &index)
 {
     recordpath  = filemodel->filePath(index);
+}
+
+
+void MainWindow::on_browseout_button_clicked()
+{
+    savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", "C://", "WAV files (*.wav)");
+}
+
+
+void MainWindow::on_about_button_clicked()
+{
+    About aboutdial;
+    aboutdial.exec();
+
 }
 
