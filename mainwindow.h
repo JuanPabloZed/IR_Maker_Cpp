@@ -32,14 +32,16 @@ public:
 private slots:
     void on_createir_button_clicked();
     void on_browsesweep_button_clicked();
-//    void on_loadfolder_button_clicked();
 
     void on_treeView_clicked(const QModelIndex &index);
-
 
     void on_customsave_radio_toggled(bool checked);
 
     void on_autosr_check_stateChanged(int arg1);
+
+    void on_files_list_indexesMoved(const QModelIndexList &indexes);
+
+    void on_sweepgen_button_clicked();
 
 private:
     Ui::MainWindow *ui;
