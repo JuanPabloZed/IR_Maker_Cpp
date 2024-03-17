@@ -105,6 +105,12 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 
 void MainWindow::on_files_list_indexesMoved(const QModelIndexList &indexes)
 {
-    int a = 5;
+    //int a = 5;
+}
+
+
+void MainWindow::on_sweepgen_button_clicked()
+{
+    // open sweep generator window
 }
 
