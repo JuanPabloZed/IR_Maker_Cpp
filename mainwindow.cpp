@@ -80,11 +80,8 @@ void MainWindow::on_createir_button_clicked()
 {
     // check if everything is ok before computing
     // sweep in mono
-    if (sweeppath == "") {
-        QMessageBox::critical(this, "No sweep file selected", "No sweep file has been selected. Please select a sweep file.");
-        // make browsesweep_button's border red ?
-        return;
-    }
+
+
     // recordings are ok
 
     // compute
