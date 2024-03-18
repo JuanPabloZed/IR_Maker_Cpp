@@ -22,11 +22,13 @@ public:
     //info for processing
     QString sweeppath;
     QString recordpath;
+    QString recorddir;
     QString savepathauto; // for autosave
     QString savepathcstm; // for custom save
 
     // audio data
     AudioFile<int> sweep;
+    AudioFile<int> recording;
     AudioFile<int> out;
     void checkall();
 
@@ -54,6 +56,8 @@ private slots:
     void on_end_freq_textChanged(const QString &arg1);
 
     void on_srate_textChanged(const QString &arg1);
+
+    void on_sweepgen_button_clicked();
 
 private:
     Ui::MainWindow *ui;

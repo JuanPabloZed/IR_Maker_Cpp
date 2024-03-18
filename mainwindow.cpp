@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "about.h"
+#include "sweepgenerator.h"
 #include "AudioFile.h"
 #include <QPushButton>
 #include <QFileDialog>
@@ -29,15 +30,17 @@ MainWindow::MainWindow(QWidget *parent)
     dirmodel->setFilter(QDir::NoDotAndDotDot | QDir::AllDirs);
     dirmodel->setRootPath(root);
     ui->treeView->setModel(dirmodel);
+    ui->treeView->hideColumn(1);
+    ui->treeView->hideColumn(2);
+    ui->treeView->hideColumn(3);
 
     // set filemodel for listview
     filemodel = new QFileSystemModel(this);
-    filemodel->setRootPath("");
     filemodel->setFilter(QDir::NoDotAndDotDot | QDir::Files);
     filemodel->setNameFilters(QStringList()<<"*.wav");
     filemodel->setNameFilterDisables(false);
+    filemodel->setRootPath("");
     ui->files_list->setModel(filemodel);
-
     this->checkall();
 
 }
@@ -78,14 +81,28 @@ void MainWindow::checkall(){
 
 void MainWindow::on_createir_button_clicked()
 {
-    // check if everything is ok before computing
-    // sweep in mono
-
-
+    // check sample rates (NEED TO BE PCM)
+    // TODO : ADD QMESSAGEBOX IF NOT PCM)
+    if (sweep.getSampleRate() != recording.getSampleRate()){
+        QMessageBox::warning(this,"Non matching sample rates","Sample rates between the sweep and the recording are not the same. The resulting IR won't be as clean as it can be.");
+    }
     // recordings are ok
 
     // compute
 
+    // output
+    if (ui->autosave_radio->isChecked()){
+        QDir autosaveroot(recorddir);
+        QFileInfo recinfo(recordpath);
+        // create output folder if not already done
+        if (!QDir(recorddir + QString("/IR")).exists()){
+            autosaveroot.mkdir("IR");
+        }
+        savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
+        // TODO : SAVE FILE AT SAVEPATHAUTO
+    } else {
+        // TODO : SAVE FILE AT SAVEPATHCSTM
+    }
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);
 }
@@ -95,7 +112,10 @@ void MainWindow::on_browsesweep_button_clicked()
 {
     // get path of sweep
     QString sweeppath = QFileDialog::getOpenFileName(this, "Select a sweep file", "C://","WAV files (*.wav)");
-
+    if (sweeppath == ""){
+        this->checkall();
+        return;
+    }
     // store sweep data & info
     sweep.load(sweeppath.toStdString());
     // check if mono
@@ -108,6 +128,8 @@ void MainWindow::on_browsesweep_button_clicked()
     QFileInfo sweepinfo(sweeppath);
     QString sweepname(sweepinfo.baseName());
     ui->browsesweep_button->setText(sweepname);
+
+    sweep.load(sweeppath.toStdString());
     this->checkall();
 }
 
@@ -117,8 +139,8 @@ void MainWindow::on_treeView_clicked(const QModelIndex &index)
     if (!ui->files_list->isEnabled()){
         ui->files_list->setEnabled(true);
     }
-    QString dirpath = dirmodel->fileInfo(index).absoluteFilePath();
-    ui->files_list->setRootIndex(filemodel->setRootPath(dirpath));
+    recorddir = dirmodel->fileInfo(index).absoluteFilePath();
+    ui->files_list->setRootIndex(filemodel->setRootPath(recorddir));
 }
 
 
@@ -146,6 +168,18 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 void MainWindow::on_files_list_clicked(const QModelIndex &index)
 {
     recordpath  = filemodel->filePath(index);
+    // check if special characters in file name
+    bool recloaded = recording.load(recordpath.toStdString());
+    if (!recloaded){
+        QMessageBox::critical(this,"File name with special characters","The file you selected has special characters (letters with accents, punctuation...) that cannot be read. Please either rename your file, or select another one.");
+        this->checkall();
+        return;
+    }
+    // automatically set output samplerate to recording's samplerate if option is checked
+    if (ui->autosr_check->isChecked()){
+        ui->srate->setText(QString::number(recording.getSampleRate()));
+    }
+
     this->checkall();
 }
 
@@ -182,4 +216,11 @@ void MainWindow::on_autosave_radio_toggled(bool checked)
 
 void MainWindow::on_srate_textChanged(const QString &arg1)
 { this->checkall(); }
+
+
+void MainWindow::on_sweepgen_button_clicked()
+{
+    SweepGenerator sweepwindow;
+    sweepwindow.exec();
+}
 

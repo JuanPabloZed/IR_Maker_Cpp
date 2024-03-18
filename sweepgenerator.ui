@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SweepGenerator</class>
+ <widget class="QDialog" name="SweepGenerator">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>471</width>
+    <height>550</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog {
+background : #303030;
+color : #8bc34a;
+}
+
+QGroupBox{
+color : #8bc34a;
+font: bold 13px;
+border: 1px solid #8bc34a;
+border-radius: 2px;
+margin-top: 1ex;
+background: #343536;
+}
+
+QGroupBox::title{
+subcontrol-origin: margin;
+subcontrol-position: top center;
+padding: 0 3px;
+}
+
+QMessageBox{
+background: #343536;
+alternate-background-color: #545556;
+}
+
+QLabel{
+color : #8bc34a;
+font: bold;
+}
+
+QLineEdit:enabled{
+color : #8bc34a;
+border: 1px solid #8bc34a;
+border-radius: 2px;
+padding: 2px;
+background : #242526;
+font: bold;
+}
+
+QLineEdit:!enabled{
+color: #b5b5b5;
+border: 1px solid #858585;
+border-radius: 3px;
+padding: 2px;
+background : #444546;
+font: bold;
+}
+
+QPushButton[flat=&quot;true&quot;]{
+color : #8bc34a;
+}
+
+QPushButton[flat=&quot;false&quot;]:enabled{
+color : #8bc34a;
+font: bold 14px;
+background : #303030;
+border-radius: 2px;
+border-style: outset;
+border-width: 1px;
+border-color: rgb(119, 175, 54);
+padding: 5px;
+}
+
+QPushButton:hover:enabled{
+background: #37400b;
+}
+
+QPushButton[flat=&quot;false&quot;]:!enabled{
+font: bold;
+color: #858585;
+background : #444546;
+border-radius: 2px;
+border-style: outset;
+border-width: 1px;
+border-color: #656565;
+padding: 5px;
+}
+
+QCheckBox::indicator{
+border: 2px solid;
+border-radius: 3px; 
+}
+
+QCheckBox:enabled{
+color: #8bc34a;
+}
+
+QCheckBox::indicator:enabled{
+border: 2px solid #8bc34a;
+}
+
+QCheckBox::indicator:!enabled{
+border: 2px solid #656565;
+}
+
+QCheckBox::indicator:checked{
+background: #8bc34a;
+border-color: #8bc34a;
+}
+
+QRadioButton:checked{
+color: #8bc34a;
+font: bold;
+}
+
+QRadioButton{
+color: #858585;
+font: bold;
+}
+
+QRadioButton::indicator:checked{
+background: #252525;
+border: 4px solid #8bc34a;
+border-radius:6px;
+}
+
+QRadioButton::indicator:!checked{
+background: #252525;
+border: 2px solid #858585;
+border-radius:6px;
+}
+
+QComboBox{
+background: #353535;
+color: #8bc34a;
+border: 2px solid #8bc34a;
+border-radius: 3px;
+}
+
+QTreeView{
+background: #252525;
+border-radius: 6px;
+color: #8bc34a;
+}
+
+QTreeView::branch:open {
+    image: url(:img/img/branch-open.png);
+}
+
+QTreeView::branch:closed:has-children {
+    image: url(:img/img/branch-closed.png);
+}
+
+QHeaderView::section{
+color: #8bc34a;
+background-color: #444546;
+font: bold;
+}
+
+QListView:enabled{
+background: #252525;
+border-radius: 2px;
+color: #8bc34a;
+}
+
+QListView:!enabled{
+background: #454545;
+border-radius: 2px;
+}
+
+QGraphicsView{
+background: #252525;
+border-radius: 12px;
+}
+
+QSplitter::handle{
+color: #343536;
+background-color: #343536;
+border: none;
+}
+
+QScrollBar{
+background: #353535;
+border: none;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page{
+background: none;
+border: none;
+}
+
+QScrollBar::handle{
+background-color: #555555;
+}
+
+QScrollBar:left-arrow, QScrollBar::right-arrow{
+border: none;
+width: 4px;
+height: 4px;
+background: #8bc34a;
+}
+
+QScrollBar:up-arrow, QScrollBar::down-arrow{
+border: none;
+width: 4px;
+height: 4px;
+background: #8bc34a;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line{
+border: none;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_3">
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>220</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>220</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QGroupBox" name="params_box">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>210</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>250</width>
+          <height>210</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>Sweep parameters</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QFormLayout" name="formLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Beginning freq. (Hz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="beg_freq">
+             <property name="text">
+              <string>20</string>
+             </property>
+             <property name="placeholderText">
+              <string>in Hz</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Ending freq. (Hz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="end_freq">
+             <property name="text">
+              <string>20000</string>
+             </property>
+             <property name="placeholderText">
+              <string>in Hz</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Duration (sec)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="duration">
+             <property name="text">
+              <string>12</string>
+             </property>
+             <property name="placeholderText">
+              <string>in sec</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Sample rate (Hz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="srate">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <property name="placeholderText">
+              <string>in Hz</string>
+             </property>
+             <item>
+              <property name="text">
+               <string>44100</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>48000</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>88200</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>96000</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>176400</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>192000</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Saving location</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="save_button">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="text">
+            <string>Browse...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout" stretch="1,3,3,1">
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="gen_button">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>Generate sweep</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="play_button">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>Play sweep</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>10</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QGraphicsView" name="sweep_plot"/>
+     <widget class="QGraphicsView" name="spectro_plot"/>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

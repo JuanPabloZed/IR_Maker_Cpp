@@ -15,7 +15,7 @@
   </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow {
-background : #343536;
+background : #303030;
 color : #8bc34a;
 }
 
@@ -24,8 +24,8 @@ color : #8bc34a;
 font: bold 13px;
 border: 1px solid #8bc34a;
 border-radius: 2px;
-margin-top: 3ex;
-background: #252525;
+margin-top: 1ex;
+background: #343536;
 }
 
 QGroupBox::title{
@@ -69,7 +69,7 @@ color : #8bc34a;
 QPushButton[flat=&quot;false&quot;]:enabled{
 color : #8bc34a;
 font: bold 14px;
-background : #343536;
+background : #303030;
 border-radius: 2px;
 border-style: outset;
 border-width: 1px;
@@ -388,7 +388,11 @@ border: none;
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="QTreeView" name="treeView"/>
+           <widget class="QTreeView" name="treeView">
+            <attribute name="headerVisible">
+             <bool>false</bool>
+            </attribute>
+           </widget>
            <widget class="QListView" name="files_list">
             <property name="enabled">
              <bool>false</bool>
