@@ -22,9 +22,10 @@ color : #8bc34a;
 QGroupBox{
 color : #8bc34a;
 font: bold 13px;
-border: 2px solid #8bc34a;
-border-radius: 12px;
+border: 1px solid #8bc34a;
+border-radius: 2px;
 margin-top: 3ex;
+background: #252525;
 }
 
 QGroupBox::title{
@@ -41,7 +42,7 @@ font: bold;
 QLineEdit:enabled{
 color : #8bc34a;
 border: 1px solid #8bc34a;
-border-radius: 8px;
+border-radius: 2px;
 padding: 2px;
 background : #242526;
 font: bold;
@@ -50,7 +51,7 @@ font: bold;
 QLineEdit:!enabled{
 color: #b5b5b5;
 border: 1px solid #858585;
-border-radius: 8px;
+border-radius: 3px;
 padding: 2px;
 background : #444546;
 font: bold;
@@ -62,11 +63,11 @@ color : #8bc34a;
 
 QPushButton[flat=&quot;false&quot;]:enabled{
 color : #8bc34a;
-font: bold;
-background : #242526;
-border-radius: 8px;
+font: bold 14px;
+background : #343536;
+border-radius: 3px;
 border-style: outset;
-border-width: 2px;
+border-width: 1px;
 border-color: rgb(119, 175, 54);
 padding: 5px;
 }
@@ -75,9 +76,9 @@ QPushButton[flat=&quot;false&quot;]:!enabled{
 font: bold;
 color: #858585;
 background : #444546;
-border-radius: 8px;
+border-radius: 4px;
 border-style: outset;
-border-width: 2px;
+border-width: 1px;
 border-color: #656565;
 padding: 5px;
 }
@@ -104,8 +105,13 @@ background: #8bc34a;
 border-color: #8bc34a;
 }
 
-QRadioButton{
+QRadioButton:checked{
 color: #8bc34a;
+font: bold;
+}
+
+QRadioButton{
+color: #858585;
 font: bold;
 }
 
@@ -150,13 +156,13 @@ font: bold;
 
 QListView:enabled{
 background: #252525;
-border-radius: 6px;
+border-radius: 2px;
 color: #8bc34a;
 }
 
 QListView:!enabled{
 background: #454545;
-border-radius: 6px;
+border-radius: 2px;
 }
 
 QGraphicsView{
@@ -172,14 +178,34 @@ border: none;
 
 QScrollBar{
 background: #353535;
+border: none;
 }
 
 QScrollBar::add-page, QScrollBar::sub-page{
-    background: none;
+background: none;
+border: none;
 }
 
 QScrollBar::handle{
 background-color: #555555;
+}
+
+QScrollBar:left-arrow, QScrollBar::right-arrow{
+border: none;
+width: 4px;
+height: 4px;
+background: #8bc34a;
+}
+
+QScrollBar:up-arrow, QScrollBar::down-arrow{
+border: none;
+width: 4px;
+height: 4px;
+background: #8bc34a;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line{
+border: none;
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
