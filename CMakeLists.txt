@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         about.h about.cpp about.ui
         add.qrc
         img/irmaker.ico
+        img/branch-closed.png img/branch-open.png
 
     )
 # Define target properties for Android with Qt 6 as:

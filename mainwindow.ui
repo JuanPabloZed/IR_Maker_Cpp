@@ -13,6 +13,175 @@
   <property name="windowTitle">
    <string>IR Maker</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+background : #343536;
+color : #8bc34a;
+}
+
+QGroupBox{
+color : #8bc34a;
+font: bold 13px;
+border: 2px solid #8bc34a;
+border-radius: 12px;
+margin-top: 3ex;
+}
+
+QGroupBox::title{
+subcontrol-origin: margin;
+subcontrol-position: top center;
+padding: 0 3px;
+}
+
+QLabel{
+color : #8bc34a;
+font: bold;
+}
+
+QLineEdit:enabled{
+color : #8bc34a;
+border: 1px solid #8bc34a;
+border-radius: 8px;
+padding: 2px;
+background : #242526;
+font: bold;
+}
+
+QLineEdit:!enabled{
+color: #b5b5b5;
+border: 1px solid #858585;
+border-radius: 8px;
+padding: 2px;
+background : #444546;
+font: bold;
+}
+
+QPushButton[flat=&quot;true&quot;]{
+color : #8bc34a;
+}
+
+QPushButton[flat=&quot;false&quot;]:enabled{
+color : #8bc34a;
+font: bold;
+background : #242526;
+border-radius: 8px;
+border-style: outset;
+border-width: 2px;
+border-color: rgb(119, 175, 54);
+padding: 5px;
+}
+
+QPushButton[flat=&quot;false&quot;]:!enabled{
+font: bold;
+color: #858585;
+background : #444546;
+border-radius: 8px;
+border-style: outset;
+border-width: 2px;
+border-color: #656565;
+padding: 5px;
+}
+
+QCheckBox::indicator{
+border: 2px solid;
+border-radius: 3px; 
+}
+
+QCheckBox:enabled{
+color: #8bc34a;
+}
+
+QCheckBox::indicator:enabled{
+border: 2px solid #8bc34a;
+}
+
+QCheckBox::indicator:!enabled{
+border: 2px solid #656565;
+}
+
+QCheckBox::indicator:checked{
+background: #8bc34a;
+border-color: #8bc34a;
+}
+
+QRadioButton{
+color: #8bc34a;
+font: bold;
+}
+
+QRadioButton::indicator:checked{
+background: #252525;
+border: 4px solid #8bc34a;
+border-radius:6px;
+}
+
+QRadioButton::indicator:!checked{
+background: #252525;
+border: 2px solid #858585;
+border-radius:6px;
+}
+
+QComboBox{
+background: #353535;
+color: #8bc34a;
+border: 2px solid #8bc34a;
+border-radius: 3px;
+}
+
+QTreeView{
+background: #252525;
+border-radius: 6px;
+color: #8bc34a;
+}
+
+QTreeView::branch:open {
+    image: url(:img/img/branch-open.png);
+}
+
+QTreeView::branch:closed:has-children {
+    image: url(:img/img/branch-closed.png);
+}
+
+QHeaderView::section{
+color: #8bc34a;
+background-color: #444546;
+font: bold;
+}
+
+QListView:enabled{
+background: #252525;
+border-radius: 6px;
+color: #8bc34a;
+}
+
+QListView:!enabled{
+background: #454545;
+border-radius: 6px;
+}
+
+QGraphicsView{
+background: #252525;
+border-radius: 12px;
+}
+
+QSplitter::handle{
+color: #343536;
+background-color: #343536;
+border: none;
+}
+
+QScrollBar{
+background: #353535;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page{
+    background: none;
+}
+
+QScrollBar::handle{
+background-color: #555555;
+}</string>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
@@ -38,7 +207,7 @@
          </size>
         </property>
         <property name="title">
-         <string>Sweep</string>
+         <string>SWEEP</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
@@ -176,7 +345,7 @@
          </size>
         </property>
         <property name="title">
-         <string>Select your recordings location</string>
+         <string>SELECT YOUR RECORDING FILE(S)</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_10">
          <item>
@@ -216,7 +385,7 @@
          </size>
         </property>
         <property name="title">
-         <string>Output</string>
+         <string>OUTPUT</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
          <item>
@@ -285,6 +454,9 @@ folder in recordings folder)</string>
              </item>
              <item>
               <widget class="QCheckBox" name="autosr_check">
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
                <property name="text">
                 <string>Auto</string>
                </property>
@@ -350,9 +522,15 @@ folder in recordings folder)</string>
              </item>
              <item>
               <widget class="QComboBox" name="bitdepth_combo">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>70</width>
+                 <width>60</width>
                  <height>16777215</height>
                 </size>
                </property>
