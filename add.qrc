@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/img">
         <file>img/irmaker.ico</file>
-        <file>img/branch-closed.png</file>
-        <file>img/branch-open.png</file>
+        <file>img/branch-closed2.png</file>
+        <file>img/branch-open2.png</file>
     </qresource>
 </RCC>

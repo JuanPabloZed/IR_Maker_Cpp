@@ -4,6 +4,7 @@
 //#include "pffft.h"
 #include <QMainWindow>
 #include <QFileSystemModel>
+#include <QtCharts>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -31,6 +32,7 @@ public:
     AudioFile<int> recording;
     AudioFile<int> out;
     void checkall();
+
 
 private slots:
     void on_createir_button_clicked();

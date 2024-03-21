@@ -8,6 +8,30 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QFileSystemModel>
+#include <QtCharts>
+
+// workflow functions
+void initchart(QChart *chart, QString title, bool logmode=false){
+
+    // if (logmode){
+    //     chart->addAxis(new QLogValueAxis, Qt::AlignBottom);
+    //     chart->addAxis(new QValueAxis, Qt::AlignLeft);
+    // } else{
+    //     chart->createDefaultAxes();
+    // }
+
+    chart->legend()->hide();
+    chart->setPlotAreaBackgroundBrush(QBrush(QColor(QRgb(0x252525))));
+    chart->setPlotAreaBackgroundVisible(true);
+    chart->setBackgroundVisible(false);
+    chart->setTitle(title);
+    chart->setTitleBrush(QColor(QRgb(0x8bc34a)));
+    chart->setTitleFont(QFont("Arial", 11));
+    chart->layout()->setContentsMargins(0, 0, 0, 0);
+    chart->setMargins({5, 5, 5, 5});
+    chart->setBackgroundRoundness(0);
+};
+
 
 // define constructor
 MainWindow::MainWindow(QWidget *parent)
@@ -43,6 +67,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->files_list->setModel(filemodel);
     this->checkall();
 
+    // set the graphs chart
+    auto irchart = new QChart();
+    auto freqchart = new QChart();
+    initchart(irchart, QString("Waveform"));
+    initchart(freqchart, QString("Spectrum"), true);
+
+    // apply the charts to the chartviews
+    ui->ir_plot->setChart(irchart);
+    ui->ir_plot->setRenderHint(QPainter::Antialiasing);
+    ui->freq_plot->setChart(freqchart);
+    ui->freq_plot->setRenderHint(QPainter::Antialiasing);
 }
 // define destructor
 MainWindow::~MainWindow()
@@ -103,6 +138,22 @@ void MainWindow::on_createir_button_clicked()
     } else {
         // TODO : SAVE FILE AT SAVEPATHCSTM
     }
+
+    // PLOTTING
+    ui->ir_plot->chart()->removeAllSeries();
+
+    // get the series
+    auto irseries = new QLineSeries;
+    auto pen = irseries->pen();
+    pen.setColor(QRgb(0x8bc34a));
+    pen.setWidth(0);
+    irseries->setPen(pen);
+    for(int i=0; i<recording.getNumSamplesPerChannel(); i++){
+        irseries->append((double)i/recording.getSampleRate(), recording.samples[0][i]);
+    }
+    ui->ir_plot->chart()->addSeries(irseries);
+    ui->ir_plot->chart()->createDefaultAxes();
+    ui->ir_plot->setRubberBand(QChartView::HorizontalRubberBand);
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);
 }

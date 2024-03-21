@@ -150,11 +150,11 @@ color: #8bc34a;
 }
 
 QTreeView::branch:open {
-    image: url(:img/img/branch-open.png);
+    image: url(:img/img/branch-open2.png);
 }
 
 QTreeView::branch:closed:has-children {
-    image: url(:img/img/branch-closed.png);
+    image: url(:img/img/branch-closed2.png);
 }
 
 QHeaderView::section{
@@ -167,6 +167,7 @@ QListView:enabled{
 background: #252525;
 border-radius: 2px;
 color: #8bc34a;
+
 }
 
 QListView:!enabled{
@@ -176,7 +177,7 @@ border-radius: 2px;
 
 QGraphicsView{
 background: #252525;
-border-radius: 12px;
+border: none;
 }
 
 QSplitter::handle{
@@ -739,14 +740,21 @@ folder in recordings folder)</string>
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QGraphicsView" name="ir_plot"/>
-      <widget class="QGraphicsView" name="spectral_plot"/>
-      <widget class="QGraphicsView" name="spectrogram_plot"/>
+      <widget class="QChartView" name="ir_plot"/>
+      <widget class="QChartView" name="freq_plot"/>
+      <widget class="QChartView" name="spectrogram_plot"/>
      </widget>
     </item>
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">QtCharts</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
