@@ -9,6 +9,9 @@
 #include <QMessageBox>
 #include <QFileSystemModel>
 #include <QtCharts>
+#include <QPen>
+
+#include <cmath>
 
 // workflow functions
 void initchart(QChart *chart, QString title, bool logmode=false){
@@ -149,11 +152,24 @@ void MainWindow::on_createir_button_clicked()
     pen.setWidth(0);
     irseries->setPen(pen);
     for(int i=0; i<recording.getNumSamplesPerChannel(); i++){
-        irseries->append((double)i/recording.getSampleRate(), recording.samples[0][i]);
+        irseries->append((double)i/recording.getSampleRate(), recording.samples[0][i]/(pow(2,recording.getBitDepth()-1)));
     }
+    // plot
     ui->ir_plot->chart()->addSeries(irseries);
     ui->ir_plot->chart()->createDefaultAxes();
+    ui->ir_plot->chart()->axes()[0]->setGridLineColor(QRgb(0x656565));
+    ui->ir_plot->chart()->axes()[0]->setLinePenColor(QRgb(0x656565));
+    ui->ir_plot->chart()->axes()[0]->setTitleText("Time(s)");
+    ui->ir_plot->chart()->axes()[0]->setTitleBrush(QBrush(QRgb(0x8bc34a)));
+    ui->ir_plot->chart()->axes()[0]->setLabelsBrush(QBrush(QRgb(0x6ba32a)));
+    ui->ir_plot->chart()->axes()[1]->setGridLineColor(QRgb(0x656565));
+    ui->ir_plot->chart()->axes()[1]->setTitleText("Signal (normalized)");
+    ui->ir_plot->chart()->axes()[1]->setTitleBrush(QBrush(QRgb(0x8bc34a)));
+    ui->ir_plot->chart()->axes()[1]->setLinePenColor(QRgb(0x656565));
+    ui->ir_plot->chart()->axes()[1]->setLabelsBrush(QBrush(QRgb(0x6ba32a)));
+
     ui->ir_plot->setRubberBand(QChartView::HorizontalRubberBand);
+
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);
 }
