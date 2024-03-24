@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "qcustomplot.h"
 #include "about.h"
 #include "sweepgenerator.h"
 #include "AudioFile.h"
@@ -79,8 +80,7 @@ MainWindow::MainWindow(QWidget *parent)
     // apply the charts to the chartviews
     ui->ir_plot->setChart(irchart);
     ui->ir_plot->setRenderHint(QPainter::Antialiasing);
-    ui->freq_plot->setChart(freqchart);
-    ui->freq_plot->setRenderHint(QPainter::Antialiasing);
+
 }
 // define destructor
 MainWindow::~MainWindow()
@@ -155,20 +155,46 @@ void MainWindow::on_createir_button_clicked()
         irseries->append((double)i/recording.getSampleRate(), recording.samples[0][i]/(pow(2,recording.getBitDepth()-1)));
     }
     // plot
-    ui->ir_plot->chart()->addSeries(irseries);
-    ui->ir_plot->chart()->createDefaultAxes();
-    ui->ir_plot->chart()->axes()[0]->setGridLineColor(QRgb(0x656565));
-    ui->ir_plot->chart()->axes()[0]->setLinePenColor(QRgb(0x656565));
-    ui->ir_plot->chart()->axes()[0]->setTitleText("Time(s)");
-    ui->ir_plot->chart()->axes()[0]->setTitleBrush(QBrush(QRgb(0x8bc34a)));
-    ui->ir_plot->chart()->axes()[0]->setLabelsBrush(QBrush(QRgb(0x6ba32a)));
-    ui->ir_plot->chart()->axes()[1]->setGridLineColor(QRgb(0x656565));
-    ui->ir_plot->chart()->axes()[1]->setTitleText("Signal (normalized)");
-    ui->ir_plot->chart()->axes()[1]->setTitleBrush(QBrush(QRgb(0x8bc34a)));
-    ui->ir_plot->chart()->axes()[1]->setLinePenColor(QRgb(0x656565));
-    ui->ir_plot->chart()->axes()[1]->setLabelsBrush(QBrush(QRgb(0x6ba32a)));
 
+    QValueAxis *xax = new QValueAxis();
+    QValueAxis *yax = new QValueAxis();
+
+    xax->setGridLineColor(QRgb(0x656565));
+    xax->setLinePenColor(QRgb(0x656565));
+    xax->setTitleText("Time(s)");
+    xax->setTitleBrush(QBrush(QRgb(0x8bc34a)));
+    xax->setLabelsBrush(QBrush(QRgb(0x6ba32a)));
+    xax->setRange(0, recording.getNumSamplesPerChannel()/recording.getSampleRate());
+    xax->setMinorGridLineVisible(true);
+    xax->setMinorGridLineColor(QRgb(0x353535));
+    xax->setMinorTickCount(4);
+
+    yax->setGridLineColor(QRgb(0x656565));
+    yax->setLinePenColor(QRgb(0x656565));
+    yax->setTitleText("Amplitude (normalized)");
+    yax->setTitleBrush(QBrush(QRgb(0x8bc34a)));
+    yax->setLabelsBrush(QBrush(QRgb(0x6ba32a)));
+    ui->ir_plot->chart()->addAxis(xax,Qt::AlignBottom);
+    ui->ir_plot->chart()->addAxis(yax,Qt::AlignLeft);
+
+
+    ui->ir_plot->chart()->addSeries(irseries);
+    irseries->attachAxis(xax);
+    irseries->attachAxis(yax);
     ui->ir_plot->setRubberBand(QChartView::HorizontalRubberBand);
+
+    ui->freq_plot->addGraph();
+    QVector<double> x;
+    QVector<double> y;
+    for(int i=0;i<recording.getNumSamplesPerChannel(); i++){
+        x.push_back((double)i/recording.getSampleRate());
+        y.push_back(recording.samples[0][i]/pow(2, recording.getBitDepth()-1));
+    }
+    ui->freq_plot->graph(0)->setData(x,y);
+    ui->freq_plot->setInteraction(QCP::iRangeDrag, Qt::Horizontal);
+    ui->freq_plot->setInteraction(QCP::iRangeZoom, Qt::Horizontal);
+    ui->freq_plot->replot();
+
 
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);

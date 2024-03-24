@@ -741,7 +741,7 @@ folder in recordings folder)</string>
        <enum>Qt::Vertical</enum>
       </property>
       <widget class="QChartView" name="ir_plot"/>
-      <widget class="QChartView" name="freq_plot"/>
+      <widget class="QCustomPlot" name="freq_plot"/>
       <widget class="QChartView" name="spectrogram_plot"/>
      </widget>
     </item>
@@ -753,6 +753,11 @@ folder in recordings folder)</string>
    <class>QChartView</class>
    <extends>QGraphicsView</extends>
    <header location="global">QtCharts</header>
+  </customwidget>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">qcustomplot.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
