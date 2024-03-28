@@ -1,10 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "AudioFile.h"
-//#include "pffft.h"
+#include "qcustomplot.h"
 #include <QMainWindow>
 #include <QFileSystemModel>
-#include <QtCharts>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -28,14 +27,19 @@ public:
     QString savepathcstm; // for custom save
 
     // audio data
-    AudioFile<int> sweep;
-    AudioFile<int> recording;
-    AudioFile<int> out;
+    AudioFile<double> sweep;
+    AudioFile<double> recording;
+    AudioFile<double> out;
+    std::vector<std::vector<float>> out_spectrum;
     void checkall();
+    int deconvolve();
 
 
 private slots:
+    void limXZoomIR(QCPRange);
+
     void on_createir_button_clicked();
+
     void on_browsesweep_button_clicked();
 
     void on_treeView_clicked(const QModelIndex &index);
@@ -43,7 +47,6 @@ private slots:
     void on_customsave_radio_toggled(bool checked);
 
     void on_autosr_check_stateChanged(int arg1);
-
 
     void on_files_list_clicked(const QModelIndex &index);
 

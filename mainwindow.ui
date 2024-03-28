@@ -740,20 +740,15 @@ folder in recordings folder)</string>
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QChartView" name="ir_plot"/>
+      <widget class="QCustomPlot" name="ir_plot"/>
       <widget class="QCustomPlot" name="freq_plot"/>
-      <widget class="QChartView" name="spectrogram_plot"/>
+      <widget class="QGraphicsView" name="spectrogram_plot"/>
      </widget>
     </item>
    </layout>
   </widget>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QChartView</class>
-   <extends>QGraphicsView</extends>
-   <header location="global">QtCharts</header>
-  </customwidget>
   <customwidget>
    <class>QCustomPlot</class>
    <extends>QGraphicsView</extends>

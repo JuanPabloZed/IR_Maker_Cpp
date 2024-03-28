@@ -44,7 +44,7 @@
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
    SOFTWARE.
 */
-   
+
 /*
    PFFFT : a Pretty Fast FFT.
 
@@ -53,9 +53,9 @@
    on cpus such as intel x86 (SSE1), powerpc (Altivec), and arm (NEON).
    
    For architectures where no SIMD instruction is available, the code
-   falls back to a scalar version.  
+   falls back to a scalar version.
 
-   Restrictions: 
+   Restrictions:
 
    - 1D transforms only, with 32-bit single precision.
 
@@ -85,7 +85,7 @@ extern "C" {
 
   /* opaque struct holding internal stuff (precomputed twiddle factors)
      this struct can be shared by many threads as it contains only
-     read-only data.  
+     read-only data.
   */
   typedef struct PFFFT_Setup PFFFT_Setup;
 
@@ -98,11 +98,11 @@ extern "C" {
   /*
     prepare for performing transforms of size N -- the returned
     PFFFT_Setup structure is read-only so it can safely be shared by
-    multiple concurrent threads. 
+    multiple concurrent threads.
   */
   PFFFT_Setup *pffft_new_setup(int N, pffft_transform_t transform);
   void pffft_destroy_setup(PFFFT_Setup *);
-  /* 
+  /*
      Perform a Fourier transform , The z-domain data is stored in the
      most efficient order for transforming it back, or using it for
      convolution. If you need to have its content sorted in the
@@ -122,7 +122,7 @@ extern "C" {
   */
   void pffft_transform(PFFFT_Setup *setup, const float *input, float *output, float *work, pffft_direction_t direction);
 
-  /* 
+  /*
      Similar to pffft_transform, but makes sure that the output is
      ordered as expected (interleaved complex numbers).  This is
      similar to calling pffft_transform and then pffft_zreorder.
@@ -131,7 +131,7 @@ extern "C" {
   */
   void pffft_transform_ordered(PFFFT_Setup *setup, const float *input, float *output, float *work, pffft_direction_t direction);
 
-  /* 
+  /*
      call pffft_zreorder(.., PFFFT_FORWARD) after pffft_transform(...,
      PFFFT_FORWARD) if you want to have the frequency components in
      the correct "canonical" order, as interleaved complex numbers.
@@ -145,7 +145,7 @@ extern "C" {
   */
   void pffft_zreorder(PFFFT_Setup *setup, const float *input, float *output, pffft_direction_t direction);
 
-  /* 
+  /*
      Perform a multiplication of the frequency components of dft_a and
      dft_b and accumulate them into dft_ab. The arrays should have
      been obtained with pffft_transform(.., PFFFT_FORWARD) and should
@@ -162,7 +162,7 @@ extern "C" {
   /*
     the float buffers must have the correct alignment (16-byte boundary
     on intel and powerpc). This function may be used to obtain such
-    correctly aligned buffers.  
+    correctly aligned buffers.
   */
   void *pffft_aligned_malloc(size_t nb_bytes);
   void pffft_aligned_free(void *);
