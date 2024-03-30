@@ -66,6 +66,8 @@
 /* detect compiler flavour */
 #if defined(_MSC_VER)
 #  define COMPILER_MSVC
+#  define _USE_MATH_DEFINES
+#  include <cmath>
 #elif defined(__GNUC__)
 #  define COMPILER_GCC
 #endif

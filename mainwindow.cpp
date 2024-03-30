@@ -7,13 +7,14 @@
 #include "pffft.h"
 // #include "qcustomplot.h"
 
-#include <QCustomPlot/qcustomplot.h>
+#include <qcustomplot.h>
 #include <QPushButton>
 #include <QFileDialog>
 #include <QDebug>
 #include <QMessageBox>
 #include <QFileSystemModel>
 #include <QPen>
+#include <QSoundEffect>
 
 #include <cmath>
 
@@ -178,7 +179,7 @@ int MainWindow::deconvolve(){
     out.setNumChannels(recording.getNumChannels());
 
     // create invess
-    float invess_temp[sweep.getNumSamplesPerChannel()];
+    std::vector<float> invess_temp(sweep.getNumSamplesPerChannel());
     double k;
     double R = log(20000.0/20.0); // change to values in ui
     int i = 0;
@@ -568,7 +569,7 @@ void MainWindow::on_createir_button_clicked()
         out_spectrum.erase(out_spectrum.begin());
     }
     // now that ir is created, it's possible to play it
-    // ui->playir_button->setEnabled(true);
+    ui->playir_button->setEnabled(true);
 }
 
 
@@ -702,5 +703,24 @@ void MainWindow::on_sweepgen_button_clicked()
 {
     SweepGenerator sweepwindow;
     sweepwindow.exec();
+}
+
+
+void MainWindow::on_playir_button_clicked()
+{
+    QSoundEffect *soundir = new QSoundEffect();
+    QUrl source;
+    if (ui->autosave_radio->isChecked()){
+        source = QUrl::fromLocalFile(savepathauto);
+        qDebug() << "autosave : " << source;
+    } else {
+        source = QUrl::fromLocalFile(savepathcstm);
+        qDebug() << "custom save";
+    }
+    soundir->setSource(source);
+    qDebug() << "new source set at " << soundir->source();
+    soundir->setVolume(1.0f);
+    soundir->play();
+
 }
 

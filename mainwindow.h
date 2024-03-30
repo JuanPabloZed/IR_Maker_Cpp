@@ -4,6 +4,7 @@
 #include "qcustomplot.h"
 #include <QMainWindow>
 #include <QFileSystemModel>
+#include <QSoundEffect>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,6 +31,7 @@ public:
     AudioFile<double> sweep;
     AudioFile<double> recording;
     AudioFile<double> out;
+    QSoundEffect ir;
     std::vector<std::vector<float>> out_spectrum;
     void checkall();
     int deconvolve();
@@ -67,6 +69,8 @@ private slots:
     void on_srate_textChanged(const QString &arg1);
 
     void on_sweepgen_button_clicked();
+
+    void on_playir_button_clicked();
 
 private:
     Ui::MainWindow *ui;
