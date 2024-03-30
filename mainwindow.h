@@ -38,6 +38,10 @@ public:
 private slots:
     void limXZoomIR(QCPRange);
 
+    void limXZoomFreq(QCPRange);
+
+    void limYZoomFreq(QCPRange);
+
     void on_createir_button_clicked();
 
     void on_browsesweep_button_clicked();

@@ -341,6 +341,9 @@ border: none;
            </item>
            <item>
             <widget class="QPushButton" name="sweepgen_button">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -742,7 +745,7 @@ folder in recordings folder)</string>
       </property>
       <widget class="QCustomPlot" name="ir_plot"/>
       <widget class="QCustomPlot" name="freq_plot"/>
-      <widget class="QGraphicsView" name="spectrogram_plot"/>
+      <widget class="QCustomPlot" name="spectrogram_plot"/>
      </widget>
     </item>
    </layout>

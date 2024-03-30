@@ -96,6 +96,8 @@ MainWindow::MainWindow(QWidget *parent)
     //Spectrum plot aspect
     ui->freq_plot->setNoAntialiasingOnDrag(true);
     QSharedPointer<QCPAxisTickerLog> logTicker(new QCPAxisTickerLog);
+    QSharedPointer<QCPAxisTickerFixed> yfreqticker(new QCPAxisTickerFixed);
+    yfreqticker->setTickStep(20);
     ui->freq_plot->addGraph();
     ui->freq_plot->setBackground(QColor(QRgb(0x242526)));
     ui->freq_plot->plotLayout()->insertRow(0);
@@ -115,14 +117,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->freq_plot->xAxis->setRange(20, 22000);
 
     ui->freq_plot->yAxis->grid()->setPen(gridpen);
+    ui->freq_plot->yAxis->setTicker(yfreqticker);
     ui->freq_plot->yAxis->setBasePen(gridpen);
     ui->freq_plot->yAxis->setTickPen(gridpen);
+    ui->freq_plot->yAxis->setSubTickPen(subgridpen);
+    ui->freq_plot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
     ui->freq_plot->yAxis->setLabelColor(labelrgb);
     ui->freq_plot->yAxis->setTickLabelColor(labelrgb);
     ui->freq_plot->yAxis->setLabel("Amplitude (dB)");
+    ui->freq_plot->yAxis->setRange(0, -120);
 
     // connect plot functions for e.g. zoom limits
     connect(ui->ir_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(limXZoomIR(QCPRange)));
+    connect(ui->freq_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(limXZoomFreq(QCPRange)));
+    connect(ui->freq_plot->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(limYZoomFreq(QCPRange)));
 
 }
 
@@ -244,6 +252,7 @@ int MainWindow::deconvolve(){
         for (int i = 0; i < fftsize; i++){
             outtemp.push_back(temp[i]);
         }
+
         out_spectrum.push_back(outtemp);
         //- backwards fft
         // use rec buffers since they won't be used anymore and are the right size
@@ -288,7 +297,7 @@ int MainWindow::deconvolve(){
     {
         out.samples[chan].erase(out.samples[chan].begin(), std::next(out.samples[chan].begin(), invessSize));
     }
-    double thresh = 0.006;
+    double thresh = 0.005;
     bool threshhit = false;
     int cutlength = 0;
     if (out.isMono()){
@@ -347,6 +356,46 @@ void MainWindow::limXZoomIR(QCPRange range){
     return;
 }
 
+void MainWindow::limXZoomFreq(QCPRange range){
+    double lowbound = 20;
+    double upbound = 22000;
+    QCPRange fixedRange(range);
+    if (fixedRange.lower < lowbound){
+        fixedRange.lower = lowbound;
+        fixedRange.upper = lowbound + range.size();
+        if (fixedRange.upper > upbound)
+        { fixedRange.upper = upbound; }
+        ui->freq_plot->xAxis->setRange(fixedRange);
+    } else if (fixedRange.upper > upbound){
+        fixedRange.upper = upbound;
+        fixedRange.lower = upbound - range.size();
+        if (fixedRange.lower < lowbound)
+        { fixedRange.lower = lowbound; }
+        ui->freq_plot->xAxis->setRange(fixedRange);
+    }
+    return;
+}
+
+void MainWindow::limYZoomFreq(QCPRange range){
+    double upbound = 0;
+    double lowbound = -120;
+    QCPRange fixedRange(range);
+    if (fixedRange.lower < lowbound){
+        fixedRange.lower = lowbound;
+        fixedRange.upper = lowbound + range.size();
+        if (fixedRange.upper > upbound)
+        { fixedRange.upper = upbound; }
+        ui->freq_plot->yAxis->setRange(fixedRange);
+    } else if (fixedRange.upper > upbound){
+        fixedRange.upper = upbound;
+        fixedRange.lower = upbound - range.size();
+        if (fixedRange.lower < lowbound)
+        { fixedRange.lower = lowbound; }
+        ui->freq_plot->yAxis->setRange(fixedRange);
+    }
+    return;
+}
+
 
 // buttons
 void MainWindow::on_createir_button_clicked()
@@ -391,42 +440,132 @@ void MainWindow::on_createir_button_clicked()
     }
 
     // PLOTTING
+    // MONO OUTPUT
     if (out.isMono()){
-    // temporal
-    QPen graphsPen;
-    graphsPen.setWidth(2);
-    graphsPen.setColor(QColor(QRgb(0x8bc34a)));
-    QVector<double> x{};
-    QVector<double> y{};
-    for(int i=0;i<out.getNumSamplesPerChannel(); i++){
-        x.push_back((double)i/out.getSampleRate());
-        y.push_back(out.samples[0][i]);
+        ui->ir_plot->clearGraphs();
+        ui->freq_plot->clearGraphs();
+        // temporal
+        QPen graphsPen;
+        graphsPen.setWidth(2);
+        graphsPen.setColor(QColor(QRgb(0x8bc34a)));
+        QPen gridpen;
+        gridpen.setWidth(1);
+        gridpen.setColor(QRgb(0x454545));
+        QSharedPointer<QCPAxisTicker> monoticker (new QCPAxisTicker);
+        QVector<double> x{};
+        QVector<double> y{};
+        for(int i=0;i<out.getNumSamplesPerChannel(); i++){
+            x.push_back((double)i/out.getSampleRate());
+            y.push_back(out.samples[0][i]);
+        }
+        ui->ir_plot->addGraph()->setData(x,y);
+        ui->ir_plot->yAxis->grid()->setPen(gridpen);
+        ui->ir_plot->yAxis->setTicker(monoticker);
+        ui->ir_plot->rescaleAxes();
+        ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
+        ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
+        ui->ir_plot->setInteraction(QCP::iRangeDrag, true);
+        ui->ir_plot->setInteraction(QCP::iRangeZoom, true);
+        ui->ir_plot->graph(0)->setPen(graphsPen);
+
+        ui->ir_plot->replot();
+
+        // spectrum
+        QVector<double> xfreq{};
+        QVector<double> yfreq{};
+        std::vector<double> ytemp;
+        for (int i = 0; i < fftsize/2; i++){
+            xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
+            ytemp.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
+        }
+        double freqmax = *std::max_element(ytemp.begin(), ytemp.end());
+        for (int i = 0; i < fftsize/2; i++){
+            yfreq.push_back(ytemp[i] - freqmax);
+        }
+        ui->freq_plot->addGraph()->setData(xfreq, yfreq);
+        ui->freq_plot->graph(0)->rescaleAxes();
+        ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+        ui->freq_plot->xAxis->setRange(20, 22000);
+        ui->freq_plot->yAxis->setRange(0,-120);
+        ui->freq_plot->graph(0)->setPen(graphsPen);
+
+        ui->freq_plot->replot();
+        // reset the spectrum container for next deconvolutions
+        out_spectrum.erase(out_spectrum.begin());
     }
-    ui->ir_plot->graph(0)->setData(x,y);
-    ui->ir_plot->graph(0)->rescaleAxes();
-    ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
-    ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-    ui->ir_plot->setInteraction(QCP::iRangeDrag, true);
-    ui->ir_plot->setInteraction(QCP::iRangeZoom, true);
-    ui->ir_plot->graph(0)->setPen(graphsPen);
+    // STEREO OUTOPUT
+    else if (out.isStereo()){
+        ui->ir_plot->clearGraphs();
+        ui->freq_plot->clearGraphs();
+        QPen graphsPenL;
+        QPen graphsPenR;
+        graphsPenL.setWidth(2);
+        graphsPenR.setWidth(2);
+        graphsPenL.setColor(QColor(QRgb(0xd43b30)));
+        graphsPenR.setColor(QColor(QRgb(0x8bc34a)));
+        QVector<double> x{};
+        QVector<double> yL{};
+        QVector<double> yR{};
+        for(int i=0;i<out.getNumSamplesPerChannel(); i++){
+            x.push_back((double)i/out.getSampleRate());
+            yL.push_back(out.samples[0][i] + 2.1);
+            yR.push_back(out.samples[1][i]);
+        }
+        QSharedPointer <QCPAxisTickerText> textticker(new QCPAxisTickerText());
+        QVector<double> ystereoticks = {0,2.1};
+        QVector<QString> ystereoticklabels = {"Right", "Left"};
+        textticker->setTicks(ystereoticks, ystereoticklabels);
+        QPen stereogridpen;
+        stereogridpen.setColor(QColor(QRgb(0x858585)));
+        ui->ir_plot->yAxis->setTicker(textticker);
+        ui->ir_plot->yAxis->grid()->setPen(stereogridpen);
+        ui->ir_plot->addGraph()->setData(x,yL);
+        ui->ir_plot->addGraph()->setData(x,yR);
+        ui->ir_plot->rescaleAxes();
+        ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
+        ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
+        ui->ir_plot->setInteraction(QCP::iRangeDrag, true);
+        ui->ir_plot->setInteraction(QCP::iRangeZoom, true);
+        ui->ir_plot->graph(0)->setPen(graphsPenL);
+        ui->ir_plot->graph(1)->setPen(graphsPenR);
 
-    ui->ir_plot->replot();
+        ui->ir_plot->replot();
 
-    // spectrum
-    QVector<double> xfreq{};
-    QVector<double> yfreq{};
-    for (int i = 0; i < fftsize/2; i++){
-        xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
-        yfreq.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
-    }
-    ui->freq_plot->graph(0)->setData(xfreq, yfreq);
-    ui->freq_plot->graph(0)->rescaleAxes();
-    ui->freq_plot->xAxis->setRange(20, 22000);
-    ui->freq_plot->graph(0)->setPen(graphsPen);
+        // spectrum
+        QPen freqPenL;
+        QPen freqPenR;
+        freqPenL.setWidth(1);
+        freqPenR.setWidth(1);
+        freqPenL.setColor(QColor(QRgb(0xf45b50)));
+        freqPenR.setColor(QColor(QRgb(0x8bc34a)));
+        QVector<double> xfreq{};
+        QVector<double> yfreqL{};
+        QVector<double> yfreqR{};
+        std::vector<double> ytempL;
+        std::vector<double> ytempR;
+        for (int i = 0; i < fftsize/2; i++){
+            xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
+            ytempL.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
+            ytempR.push_back(20*log10(sqrt(out_spectrum[1][2*i]*out_spectrum[1][2*i] + out_spectrum[1][2*i + 1]*out_spectrum[1][2*i + 1])));
+        }
+        double freqmaxL = *std::max_element(ytempL.begin(), ytempL.end());
+        double freqmaxR = *std::max_element(ytempR.begin(), ytempR.end());
+        for (int i = 0; i < fftsize/2; i++){
+            yfreqL.push_back(ytempL[i] - freqmaxL);
+            yfreqR.push_back(ytempR[i] - freqmaxR);
+        }
+        ui->freq_plot->addGraph()->setData(xfreq, yfreqL);
+        ui->freq_plot->addGraph()->setData(xfreq, yfreqR);
+        ui->freq_plot->xAxis->setRange(20,22000);
+        ui->freq_plot->yAxis->setRange(0,-120);
+        ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+        ui->freq_plot->graph(0)->setPen(freqPenL);
+        ui->freq_plot->graph(1)->setPen(freqPenR);
 
-    ui->freq_plot->replot();
-    // out_spectrum[0].erase(out_spectrum[0].begin(), out_spectrum[0].end());
-    out_spectrum.erase(out_spectrum.begin());
+        ui->freq_plot->replot();
+        // reset the spectrum container for next deconvolutions
+        out_spectrum.erase(out_spectrum.begin());
+        out_spectrum.erase(out_spectrum.begin());
     }
     // now that ir is created, it's possible to play it
     // ui->playir_button->setEnabled(true);
