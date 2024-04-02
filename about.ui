@@ -260,8 +260,7 @@ border: none;
     </rect>
    </property>
    <property name="text">
-    <string>Copyright (c) 2023 Nathan Zwahlen, Benjamin Quiédeville
-&amp; Hugo Perrier</string>
+    <string>Copyright (c) 2023 Nathan Zwahlen</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>
@@ -277,7 +276,7 @@ border: none;
     </rect>
    </property>
    <property name="text">
-    <string>Version 1.0.0</string>
+    <string>Beta</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>

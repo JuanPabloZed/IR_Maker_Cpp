@@ -1,3 +1,4 @@
+License.txt
 # Prerequisites
 *.d
 
@@ -5,6 +6,7 @@
 *.slo
 *.lo
 *.o
+!icon.o
 *.obj
 
 # Precompiled Headers

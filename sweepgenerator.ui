@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>471</width>
-    <height>550</height>
+    <width>562</width>
+    <height>396</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Sweep generator</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QDialog {
@@ -223,13 +223,13 @@ border: none;
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>220</height>
+       <height>260</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>220</height>
+       <height>260</height>
       </size>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -244,13 +244,13 @@ border: none;
         <property name="minimumSize">
          <size>
           <width>150</width>
-          <height>210</height>
+          <height>250</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>250</width>
-          <height>210</height>
+          <height>250</height>
          </size>
         </property>
         <property name="title">
@@ -339,7 +339,7 @@ border: none;
            <item row="2" column="1">
             <widget class="QLineEdit" name="duration">
              <property name="text">
-              <string>12</string>
+              <string>10</string>
              </property>
              <property name="placeholderText">
               <string>in sec</string>
@@ -408,6 +408,42 @@ border: none;
              </item>
             </widget>
            </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Bit depth</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="bitdepth">
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>16 bit</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>24 bit</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>32 bit</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QCheckBox" name="fadebox">
+             <property name="text">
+              <string>Apply fades</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
          <item>
@@ -470,23 +506,26 @@ border: none;
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
          </spacer>
         </item>
         <item>
          <widget class="QPushButton" name="gen_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
           <property name="cursor">
@@ -499,16 +538,19 @@ border: none;
         </item>
         <item>
          <widget class="QPushButton" name="play_button">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
           <property name="cursor">
@@ -530,7 +572,7 @@ border: none;
           <property name="sizeHint" stdset="0">
            <size>
             <width>10</width>
-            <height>40</height>
+            <height>50</height>
            </size>
           </property>
          </spacer>
@@ -551,12 +593,19 @@ border: none;
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <widget class="QGraphicsView" name="sweep_plot"/>
-     <widget class="QGraphicsView" name="spectro_plot"/>
+     <widget class="QCustomPlot" name="sweep_plot"/>
+     <widget class="QCustomPlot" name="spectro_plot"/>
     </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">qcustomplot.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

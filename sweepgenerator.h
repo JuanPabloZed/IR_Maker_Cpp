@@ -2,6 +2,9 @@
 #define SWEEPGENERATOR_H
 
 #include <QDialog>
+#include "AudioFile.h"
+#include <qcustomplot.h>
+#include <QSoundEffect>
 
 namespace Ui {
 class SweepGenerator;
@@ -14,6 +17,21 @@ class SweepGenerator : public QDialog
 public:
     explicit SweepGenerator(QWidget *parent = nullptr);
     ~SweepGenerator();
+    QString savepath;
+
+    AudioFile<int> sweep;
+
+    QSoundEffect sound;
+
+private slots:
+
+    void limXZoom(QCPRange range);
+
+    void on_save_button_clicked();
+
+    void on_gen_button_clicked();
+
+    void on_play_button_clicked();
 
 private:
     Ui::SweepGenerator *ui;

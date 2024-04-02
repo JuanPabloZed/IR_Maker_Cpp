@@ -5,7 +5,6 @@
 
 #include "AudioFile.h"
 #include "pffft.h"
-// #include "qcustomplot.h"
 
 #include <qcustomplot.h>
 #include <QPushButton>
@@ -338,7 +337,7 @@ int MainWindow::deconvolve(){
 }
 
 void MainWindow::limXZoomIR(QCPRange range){
-    double lowbound = 0;
+    const double lowbound = 0;
     double upbound = out.getNumSamplesPerChannel()/(double)out.getSampleRate();
     QCPRange fixedRange(range);
     if (fixedRange.lower < lowbound){
@@ -351,15 +350,15 @@ void MainWindow::limXZoomIR(QCPRange range){
         fixedRange.upper = upbound;
         fixedRange.lower = upbound - range.size();
         if (fixedRange.lower < lowbound)
-        { fixedRange.lower = lowbound; }
+            { fixedRange.lower = lowbound; }
         ui->ir_plot->xAxis->setRange(fixedRange);
     }
     return;
 }
 
 void MainWindow::limXZoomFreq(QCPRange range){
-    double lowbound = 20;
-    double upbound = 22000;
+    const double lowbound = 20;
+    const double upbound = 22000;
     QCPRange fixedRange(range);
     if (fixedRange.lower < lowbound){
         fixedRange.lower = lowbound;
@@ -465,8 +464,7 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->rescaleAxes();
         ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-        ui->ir_plot->setInteraction(QCP::iRangeDrag, true);
-        ui->ir_plot->setInteraction(QCP::iRangeZoom, true);
+        ui->ir_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->ir_plot->graph(0)->setPen(graphsPen);
 
         ui->ir_plot->replot();
@@ -485,6 +483,8 @@ void MainWindow::on_createir_button_clicked()
         }
         ui->freq_plot->addGraph()->setData(xfreq, yfreq);
         ui->freq_plot->graph(0)->rescaleAxes();
+        ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
+        ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->freq_plot->xAxis->setRange(20, 22000);
         ui->freq_plot->yAxis->setRange(0,-120);
@@ -525,8 +525,7 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->rescaleAxes();
         ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-        ui->ir_plot->setInteraction(QCP::iRangeDrag, true);
-        ui->ir_plot->setInteraction(QCP::iRangeZoom, true);
+        ui->ir_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->ir_plot->graph(0)->setPen(graphsPenL);
         ui->ir_plot->graph(1)->setPen(graphsPenR);
 
@@ -559,6 +558,8 @@ void MainWindow::on_createir_button_clicked()
         ui->freq_plot->addGraph()->setData(xfreq, yfreqR);
         ui->freq_plot->xAxis->setRange(20,22000);
         ui->freq_plot->yAxis->setRange(0,-120);
+        // ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
+        // ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
         ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->freq_plot->graph(0)->setPen(freqPenL);
         ui->freq_plot->graph(1)->setPen(freqPenR);
