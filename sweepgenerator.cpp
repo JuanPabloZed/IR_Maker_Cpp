@@ -99,17 +99,24 @@ void SweepGenerator::on_gen_button_clicked()
     double f2 = ui->end_freq->text().toDouble();
     float dur = ui->duration->text().toFloat();
     double R = log(f2 / f1);
-    std::vector<double> sweepbuffer(dur * ui->srate->currentText().toInt());
+    std::vector<int> sweepbuffer(dur * ui->srate->currentText().toInt());
 
     sweep.setNumChannels(1);
     switch(ui->bitdepth->currentIndex()){
     case 0: // 16 bit
+        qDebug() << "case 0";
         sweep.setBitDepth(16);
+        break;
     case 1: // 24 bit
+        qDebug() << "case 1";
         sweep.setBitDepth(24);
+        break;
     case 2: //32 bit
+        qDebug() << "case 2";
         sweep.setBitDepth(32);
+        break;
     }
+    qDebug() << "sweep bit depth : " << sweep.getBitDepth();
     sweep.setNumSamplesPerChannel(ui->srate->currentText().toInt() * ui->duration->text().toDouble());
     sweep.setSampleRate(ui->srate->currentText().toInt());
 
@@ -131,7 +138,7 @@ void SweepGenerator::on_gen_button_clicked()
     for (int i=0; i < dur * ui->srate->currentText().toInt(); i++){
         sweep.samples[0][i] = sweepbuffer[i];
     }
-
+    qDebug() << "sweep bit depth : " << sweep.getBitDepth();
     sweep.save(savepath.toStdString());
 
     ui->sweep_plot->clearGraphs();
@@ -144,9 +151,10 @@ void SweepGenerator::on_gen_button_clicked()
     QSharedPointer<QCPAxisTicker> monoticker (new QCPAxisTicker);
     QVector<double> x{};
     QVector<double> y{};
+    int max = *std::max_element(sweep.samples[0].begin(), sweep.samples[0].end());
     for(int i = 0;i < sweep.getNumSamplesPerChannel(); i++){
         x.push_back((double)i/sweep.getSampleRate());
-        y.push_back(sweep.samples[0][i]);
+        y.push_back(sweep.samples[0][i] / (double)max);
     }
     ui->sweep_plot->addGraph()->setData(x,y);
     ui->sweep_plot->yAxis->grid()->setPen(gridpen);

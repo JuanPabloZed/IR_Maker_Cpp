@@ -9,13 +9,47 @@
 #include <qcustomplot.h>
 #include <QPushButton>
 #include <QFileDialog>
-#include <QDebug>
+// #include <QDebug>
 #include <QMessageBox>
 #include <QFileSystemModel>
 #include <QPen>
 #include <QSoundEffect>
 
 #include <cmath>
+
+// smooth function for stereo spectra (likely to be reverbs, so will be messy without)
+QVector<double> smooth(QVector<double> &data, int n){
+    QVector<double> outvec(data.size());
+    double output;
+    double val = 1./n;
+    QVector<double> b; //Filter coefficients
+    QVector<double> m; //Filter memories
+
+    if (n<1)
+        n = 1; //Must be > 0 or bad stuff happens
+
+    for (int ii=0; ii<n; ++ii) {
+        b.push_back(val);
+        m.push_back(0.);
+    }
+
+    for (int nn=0; nn<data.size(); ++nn)
+    {
+        //Apply smoothing filter to signal
+        output = 0;
+        m[0] = data[nn];
+        for (int ii=0; ii<n; ++ii) {
+            output+=b[ii]*m[ii];
+        }
+
+        //Reshuffle memories
+        for (int ii = n-1; ii!=0; --ii) {
+            m[ii] = m[ii-1];
+        }
+        outvec[nn] = output;
+    }
+    return outvec;
+}
 
 
 // define constructor
@@ -60,7 +94,6 @@ MainWindow::MainWindow(QWidget *parent)
     subgridpen.setWidth(1);
     gridpen.setColor(QRgb(0x454545));
     subgridpen.setColor(QRgb(0x353535));
-    ui->spectrogram_plot->setVisible(false);
 
     QCPTextElement *irtitle = new QCPTextElement(ui->ir_plot, "Waveform", QFont("sans", 12, QFont::Bold));
     QCPTextElement *freqtitle = new QCPTextElement(ui->freq_plot, "Spectrum", QFont("Arial", 12, QFont::Bold));
@@ -170,10 +203,7 @@ void MainWindow::checkall(){
 
 int MainWindow::deconvolve(){
     // load existing files
-    qDebug() << "load sweep";
-    sweep.load(sweeppath.toStdString()); // CHANGE TO FUNC ARG
-    qDebug() << "load recording";
-    recording.load(recordpath.toStdString()); // CHANGE TO FUNC ARG
+    // recording.load(recordpath.toStdString()); // CHANGE TO FUNC ARG
     // directly assign the number of output channels
     out.setNumChannels(recording.getNumChannels());
 
@@ -199,15 +229,11 @@ int MainWindow::deconvolve(){
     else { fftsize <<= (int)(log2(invessSize - 1) + 1); }
     out.setNumSamplesPerChannel(fftsize);
     // get necessary buffers
-    // time buffers
-    float *rec_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
     float *invess_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
     // frequency domain buffers
-    float *rec_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
     float *invess_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-    float *out_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
     // work buffer for computation efficiency
-    float *work = (float*) pffft_aligned_malloc(fftsize*sizeof(float));
+    float *workinvess = (float*) pffft_aligned_malloc(fftsize*sizeof(float));
 
     // prepare the fft
     PFFFT_Setup *fftsetup = pffft_new_setup(fftsize, PFFFT_REAL);
@@ -224,19 +250,29 @@ int MainWindow::deconvolve(){
         }
     }
     // fft the invess for same reason
-    pffft_transform(fftsetup, (const float *)invess_timebuffer, invess_freqbuffer, work, PFFFT_FORWARD);
+    pffft_transform(fftsetup, (const float *)invess_timebuffer, invess_freqbuffer, workinvess, PFFFT_FORWARD);
     pffft_aligned_free(invess_timebuffer); // won't be needed anymore
+    pffft_aligned_free(workinvess); // won't be needed anymore
+
 
     //* start of processing loop
     for (int channel = 0; channel < recording.getNumChannels(); channel++)
     {
+        // time buffer
+        float *rec_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        // freq & phase buffer
+        float *rec_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        float *out_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        // work buffer for computation efficiency
+        float *work = (float*) pffft_aligned_malloc(fftsize*sizeof(float));
         // get the rec channel & pad the rest
         for (int i = 0; i < fftsize; i++)
         {
             if (i < recSize)
             {   // fill
                 rec_timebuffer[i] = recording.samples[channel][i];
-            } else
+            }
+            else
             {   // pad
                 rec_timebuffer[i] = 0;
             }
@@ -262,6 +298,13 @@ int MainWindow::deconvolve(){
         {
             out.samples[channel][i] = rec_timebuffer[i];
         }
+
+        pffft_aligned_free(rec_timebuffer);
+        pffft_aligned_free(rec_freqbuffer);
+        pffft_aligned_free(out_freqbuffer);
+        pffft_aligned_free(work);
+        pffft_aligned_free(temp);
+
     }
 
     pffft_destroy_setup(fftsetup);
@@ -288,50 +331,75 @@ int MainWindow::deconvolve(){
 
     //- destroy buffers
     pffft_aligned_free(invess_freqbuffer);
-    pffft_aligned_free(rec_freqbuffer);
-    pffft_aligned_free(rec_timebuffer);
 
-    //- trim left side if mono or stereo (if multichannel, just trim convolution delay)
-    // trim convolution delay
-    for (int chan = 0; chan < out.getNumChannels(); chan++)
-    {
-        out.samples[chan].erase(out.samples[chan].begin(), std::next(out.samples[chan].begin(), invessSize));
-    }
-    double thresh = 0.005;
+    // trim right side for cab IRs
+    // also trim right side because cab IRs have to be short
+    double thresh = 0.0005;
+    int cutlength = out.getNumSamplesPerChannel();
     bool threshhit = false;
-    int cutlength = 0;
-    if (out.isMono()){
-        while (!threshhit){
-            if (std::abs(out.samples[0][cutlength]) > thresh){
-                threshhit = true;
-            } else {
-                cutlength++;
-            }
+    while (!threshhit){
+        if (std::abs(out.samples[0][cutlength]) > thresh){
+            threshhit = true;
+        } else {
+            cutlength--;
         }
-        out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
-        // also trim right side because cab IRs have to be short
-        thresh = 0.0005;
-        cutlength = out.getNumSamplesPerChannel();
-        threshhit = false;
-        while (!threshhit){
-            if (std::abs(out.samples[0][cutlength] > thresh)){
-                threshhit = true;
-            } else {
-                cutlength--;
-            }
+    }
+    out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
+    //- trim left side
+    if (ui->trimbox->isChecked()){
+        // trim convolution delay
+        for (int chan = 0; chan < out.getNumChannels(); chan++)
+        {
+            out.samples[chan].erase(out.samples[chan].begin(), std::next(out.samples[chan].begin(), invessSize - (ui->srate->text().toInt()*0.2)));
         }
-        out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
+        double thresh = 0.005;
+        bool threshhit = false;
+        int cutlength = 0;
+        if (out.isMono()){
+            while (!threshhit){
+                if (std::abs(out.samples[0][cutlength]) > thresh){
+                    threshhit = true;
+                } else {
+                    cutlength++;
+                }
+            }
+            out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
+            // also trim right side because cab IRs have to be short
+            thresh = 0.0005;
+            cutlength = out.getNumSamplesPerChannel();
+            threshhit = false;
+            while (!threshhit){
+                if (std::abs(out.samples[0][cutlength]) > thresh){
+                    threshhit = true;
+                } else {
+                    cutlength--;
+                }
+            }
+            out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
 
-    } else if (out.isStereo()){
-        while (!threshhit){
-            if (std::abs(out.samples[0][cutlength]) > thresh || out.samples[1][cutlength] > thresh){
-                threshhit = true;
+        } else if (out.isStereo()){
+            while (!threshhit){
+                if (std::abs(out.samples[0][cutlength]) > thresh || out.samples[1][cutlength] > thresh){
+                    threshhit = true;
+                } else {
+                    cutlength++;
+                }
+            }
+            out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
+            out.samples[1].erase(out.samples[1].begin(), std::next(out.samples[1].begin(), cutlength));
+        }
+
+        // trim right side if wanted by the user
+        if (ui->irlengthbox->isChecked()){
+            if (ui->irlength->text() == ""){
+                QMessageBox::critical(this, "No IR length provided", "Please specify the desired length of your IR, or uncheck the \"Custom IR Length\" option.");
             } else {
-                cutlength++;
+                int length = ui->irlength->text().toDouble()*0.001 * ui->srate->text().toInt();
+                for (int chan=0; chan < out.getNumChannels(); chan++){
+                    out.samples[chan].erase(std::next(out.samples[chan].begin(), length), out.samples[chan].end());
+                }
             }
         }
-        out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
-        out.samples[1].erase(out.samples[1].begin(), std::next(out.samples[1].begin(), cutlength));
     }
     return fftsize;
 }
@@ -400,6 +468,13 @@ void MainWindow::limYZoomFreq(QCPRange range){
 // buttons
 void MainWindow::on_createir_button_clicked()
 {
+    // remove previous temporary output file
+
+    QFile tempoutfile(outuuidurl);
+
+    if (tempoutfile.exists()){
+        tempoutfile.remove();
+    }
     // check sample rates (NEED TO BE PCM)
     // TODO : ADD QMESSAGEBOX IF NOT PCM)
     if (sweep.getSampleRate() != recording.getSampleRate()){
@@ -423,7 +498,12 @@ void MainWindow::on_createir_button_clicked()
         break;
     }
 
+    out.setSampleRate(ui->srate->text().toInt());
+
     // OUTPUT
+    const auto uuid = QUuid::createUuid();
+    auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
+
     if (ui->autosave_radio->isChecked()){
         QDir autosaveroot(recorddir);
         QFileInfo recinfo(recordpath);
@@ -434,12 +514,19 @@ void MainWindow::on_createir_button_clicked()
         savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
         // TODO : SAVE FILE AT SAVEPATHAUTO
         out.save(savepathauto.toStdString());
+        QFile::copy(savepathauto, new_filename);
     } else {
         // TODO : SAVE FILE AT SAVEPATHCSTM
         out.save(savepathcstm.toStdString());
+        QFile::copy(savepathcstm, new_filename);
     }
 
+    outuuidurl = new_filename;
+    // outuuidurl = new_filename ;
+
     // PLOTTING
+    // set default yaxis ticker for ir_plot
+    ui->ir_plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
     // MONO OUTPUT
     if (out.isMono()){
         ui->ir_plot->clearGraphs();
@@ -462,6 +549,7 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->yAxis->grid()->setPen(gridpen);
         ui->ir_plot->yAxis->setTicker(monoticker);
         ui->ir_plot->rescaleAxes();
+        ui->ir_plot->yAxis->setRange(-1.05, 1.05);
         ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
         ui->ir_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
@@ -470,6 +558,7 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->replot();
 
         // spectrum
+        ui->freq_plot->setVisible(true);
         QVector<double> xfreq{};
         QVector<double> yfreq{};
         std::vector<double> ytemp;
@@ -483,9 +572,9 @@ void MainWindow::on_createir_button_clicked()
         }
         ui->freq_plot->addGraph()->setData(xfreq, yfreq);
         ui->freq_plot->graph(0)->rescaleAxes();
-        ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-        ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
-        ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+        // ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
+        // ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
+        // ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->freq_plot->xAxis->setRange(20, 22000);
         ui->freq_plot->yAxis->setRange(0,-120);
         ui->freq_plot->graph(0)->setPen(graphsPen);
@@ -496,6 +585,29 @@ void MainWindow::on_createir_button_clicked()
     }
     // STEREO OUTOPUT
     else if (out.isStereo()){
+        // data computing (for spectrum, bc delay from smoothing operation - no delay for temporal)
+        QVector<double> xfreq{};
+        QVector<double> yfreqL{};
+        QVector<double> yfreqR{};
+        QVector<double> yfreqLsmooth{};
+        QVector<double> yfreqRsmooth{};
+        std::vector<double> ytempL;
+        std::vector<double> ytempR;
+        for (int i = 0; i < fftsize/2; i++){
+            xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
+            ytempL.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
+            ytempR.push_back(20*log10(sqrt(out_spectrum[1][2*i]*out_spectrum[1][2*i] + out_spectrum[1][2*i + 1]*out_spectrum[1][2*i + 1])));
+        }
+        double freqmaxL = *std::max_element(ytempL.begin(), ytempL.end());
+        double freqmaxR = *std::max_element(ytempR.begin(), ytempR.end());
+        for (int i = 0; i < fftsize/2; i++){
+            yfreqL.push_back(ytempL[i] - freqmaxL);
+            yfreqR.push_back(ytempR[i] - freqmaxR);
+        }
+        yfreqLsmooth = smooth(yfreqL, 150);
+        yfreqRsmooth = smooth(yfreqR, 150);
+
+        // graph
         ui->ir_plot->clearGraphs();
         ui->freq_plot->clearGraphs();
         QPen graphsPenL;
@@ -523,6 +635,8 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->addGraph()->setData(x,yL);
         ui->ir_plot->addGraph()->setData(x,yR);
         ui->ir_plot->rescaleAxes();
+        // ui->ir_plot->xAxis->setRange(0, out.getNumSamplesPerChannel() / out.getSampleRate());
+        ui->ir_plot->yAxis->setRange(-1.1, 3.2);
         ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
         ui->ir_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
@@ -532,35 +646,20 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->replot();
 
         // spectrum
+        ui->freq_plot->setVisible(true);
         QPen freqPenL;
         QPen freqPenR;
         freqPenL.setWidth(1);
         freqPenR.setWidth(1);
         freqPenL.setColor(QColor(QRgb(0xf45b50)));
         freqPenR.setColor(QColor(QRgb(0x8bc34a)));
-        QVector<double> xfreq{};
-        QVector<double> yfreqL{};
-        QVector<double> yfreqR{};
-        std::vector<double> ytempL;
-        std::vector<double> ytempR;
-        for (int i = 0; i < fftsize/2; i++){
-            xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
-            ytempL.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
-            ytempR.push_back(20*log10(sqrt(out_spectrum[1][2*i]*out_spectrum[1][2*i] + out_spectrum[1][2*i + 1]*out_spectrum[1][2*i + 1])));
-        }
-        double freqmaxL = *std::max_element(ytempL.begin(), ytempL.end());
-        double freqmaxR = *std::max_element(ytempR.begin(), ytempR.end());
-        for (int i = 0; i < fftsize/2; i++){
-            yfreqL.push_back(ytempL[i] - freqmaxL);
-            yfreqR.push_back(ytempR[i] - freqmaxR);
-        }
-        ui->freq_plot->addGraph()->setData(xfreq, yfreqL);
-        ui->freq_plot->addGraph()->setData(xfreq, yfreqR);
+        ui->freq_plot->addGraph()->setData(xfreq, yfreqLsmooth);
+        ui->freq_plot->addGraph()->setData(xfreq, yfreqRsmooth);
         ui->freq_plot->xAxis->setRange(20,22000);
-        ui->freq_plot->yAxis->setRange(0,-120);
+        ui->freq_plot->yAxis->setRange(0,-100);
         // ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         // ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-        ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+        // ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->freq_plot->graph(0)->setPen(freqPenL);
         ui->freq_plot->graph(1)->setPen(freqPenR);
 
@@ -568,7 +667,56 @@ void MainWindow::on_createir_button_clicked()
         // reset the spectrum container for next deconvolutions
         out_spectrum.erase(out_spectrum.begin());
         out_spectrum.erase(out_spectrum.begin());
+
+    } else { // MULTICHANNEL OUTPUT
+        ui->ir_plot->clearGraphs();
+        ui->freq_plot->clearGraphs();
+        ui->freq_plot->setVisible(false);
+
+        QPen graphPen;
+        graphPen.setWidth(2);
+        graphPen.setColor(QColor(QRgb(0x8bc34a)));
+        QVector<double> x{};
+        QVector<QVector<double>> y;
+        for (int chan = 0; chan < out.getNumChannels(); chan++){
+            y.push_back({});
+            for (int i =0; i < out.getNumSamplesPerChannel(); i++){
+                if (chan == 0){
+                    x.push_back((double)i / out.getSampleRate());
+                }
+                y[chan].push_back((out.samples[chan][i] * 0.9f)/2 + (out.getNumChannels() - chan));
+            }
+        }
+        QPen gridpen;
+        gridpen.setColor(QColor(QRgb(0x858585)));
+
+        ui->ir_plot->yAxis->setLabel("Channels");
+        ui->ir_plot->yAxis->setSubTicks(false);
+        ui->ir_plot->yAxis->grid()->setSubGridVisible(false);
+        ui->ir_plot->yAxis->grid()->setZeroLinePen(Qt::NoPen);
+        ui->ir_plot->yAxis->grid()->setPen(gridpen);
+        for (int chan = 0; chan < out.getNumChannels(); chan++){
+            ui->ir_plot->addGraph()->setData(x, y[chan]);
+            ui->ir_plot->graph(chan)->setPen(graphPen);
+        }
+        QVector<QString> yticklabels;
+        QVector<double> yticks;
+        QSharedPointer<QCPAxisTickerText> yticker(new QCPAxisTickerText);
+        ui->ir_plot->yAxis->setTicker(yticker);
+        for (int i = 0; i < out.getNumChannels() ; i++){
+            yticker->addTick(i+1, QString::number(out.getNumChannels()-i));
+        }
+        ui->ir_plot->rescaleAxes();
+        // ui->ir_plot->xAxis->setRange(0, out.getNumSamplesPerChannel() / out.getSampleRate());
+        ui->ir_plot->yAxis->setRange(0.5, out.getNumChannels()+0.5);
+        ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
+        ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
+        ui->ir_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+
+        ui->ir_plot->replot();
+
     }
+
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);
 }
@@ -584,12 +732,17 @@ void MainWindow::on_browsesweep_button_clicked()
     }
     // store sweep data & info
     sweep.load(sweeppath.toStdString());
-    if (sweep.getBitDepth()>=32){
+    if (sweep.getBitDepth()>32){
         QMessageBox::critical(this, "64 bits files not supported", "The selected file has a 64-bit bit depth."
                                 "Only 16, 24 & 32-bit depths are supported. Please select a sweep file with compatible bit depth.");
         return;
     }
-    qDebug() << sweep.getBitDepth();
+
+    if (ui->files_list->isEnabled() && recording.getSampleRate() != sweep.getSampleRate()){
+        QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
+                                                                + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same."
+                                                                + "The resulting IR might not be what you expect.");
+    }
     // check if mono-sounding
     if (sweep.isStereo()){
         ui->browsesweep_button->setText("Browse sweep file");
@@ -638,6 +791,7 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 {
     if (ui->autosr_check->isChecked()){
         ui->srate->setEnabled(false);
+        ui->srate->setText(QString::number(recording.getSampleRate()));
     } else {
         ui->srate->setEnabled(true);
     }
@@ -655,7 +809,9 @@ void MainWindow::on_files_list_clicked(const QModelIndex &index)
         return;
     }
     if (sweep.getSampleRate() != recording.getSampleRate()){
-        QMessageBox::warning(this,"Non matching sample rates","Sample rates between the sweep and the recording are not the same. The resulting IR won't be as clean as it can be.");
+        QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
+                                                                    + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same."
+                                                                    + "The resulting IR might not be what you expect.");
     }
     // automatically set output samplerate to recording's samplerate if option is checked
     if (ui->autosr_check->isChecked()){
@@ -709,19 +865,56 @@ void MainWindow::on_sweepgen_button_clicked()
 
 void MainWindow::on_playir_button_clicked()
 {
-    QSoundEffect *soundir = new QSoundEffect();
-    QUrl source;
-    if (ui->autosave_radio->isChecked()){
-        source = QUrl::fromLocalFile(savepathauto);
-        qDebug() << "autosave : " << source;
-    } else {
-        source = QUrl::fromLocalFile(savepathcstm);
-        qDebug() << "custom save";
-    }
-    soundir->setSource(source);
-    qDebug() << "new source set at " << soundir->source();
+
+    QSoundEffect *soundir = new QSoundEffect;
+
+    soundir->setSource(QUrl::fromLocalFile(outuuidurl));
     soundir->setVolume(1.0f);
     soundir->play();
 
 }
+
+
+void MainWindow::on_irlengthbox_stateChanged(int state)
+{
+    if (state == Qt::Checked){
+        ui->irlength->setEnabled(true);
+
+    } else {
+        ui->irlength->setEnabled(false);
+    }
+}
+
+
+void MainWindow::on_trimbox_stateChanged(int state)
+{
+    if (state == Qt::Unchecked){
+        ui->irlengthbox->setChecked(false);
+        ui->irlengthbox->setEnabled(false);
+        ui->irlength->setEnabled(false);
+    } else {
+        ui->irlengthbox->setEnabled(true);
+    }
+}
+
+
+void MainWindow::on_showgraphsbox_stateChanged(int state)
+{
+    QSize size;
+    size.setWidth(this->width());
+    if (state == Qt::Checked){
+        ui->splitter->setVisible(true);
+        ui->widget_3->setMaximumHeight(290);
+        size.setHeight(700);
+        ui->widget_3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    } else {
+        ui->splitter->setVisible(false);
+        size.setHeight(300);
+        ui->widget_3->setMaximumHeight(16777215);
+        ui->widget_3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    }
+    this->resize(size);
+}
+
+
 

@@ -234,7 +234,7 @@ border: none;
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>120</x>
+     <x>130</x>
      <y>8</y>
      <width>121</width>
      <height>120</height>
@@ -253,7 +253,7 @@ border: none;
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>-9</x>
+     <x>0</x>
      <y>168</y>
      <width>380</width>
      <height>34</height>
@@ -269,9 +269,9 @@ border: none;
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>-13</x>
+     <x>0</x>
      <y>258</y>
-     <width>380</width>
+     <width>375</width>
      <height>16</height>
     </rect>
    </property>
@@ -285,14 +285,17 @@ border: none;
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>151</x>
-     <y>128</y>
-     <width>61</width>
+     <x>0</x>
+     <y>130</y>
+     <width>375</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>IR Maker™</string>
+    <string>IR Maker</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
   </widget>
   <widget class="QLabel" name="label_4">

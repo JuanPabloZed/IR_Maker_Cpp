@@ -33,6 +33,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
         qcustomplot.cpp qcustomplot.h
         icon.o
+
+
     )
 # img/irmaker.ico
 # img/branch-closed2.png img/branch-open2.png

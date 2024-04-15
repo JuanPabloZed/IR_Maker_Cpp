@@ -35,6 +35,7 @@ public:
     std::vector<std::vector<float>> out_spectrum;
     void checkall();
     int deconvolve();
+    QString outuuidurl;
 
 
 private slots:
@@ -71,6 +72,12 @@ private slots:
     void on_sweepgen_button_clicked();
 
     void on_playir_button_clicked();
+
+    void on_irlengthbox_stateChanged(int arg1);
+
+    void on_trimbox_stateChanged(int arg1);
+
+    void on_showgraphsbox_stateChanged(int arg1);
 
 private:
     Ui::MainWindow *ui;
