@@ -17,7 +17,7 @@
 
 #include <cmath>
 
-// smooth function for stereo spectra (likely to be reverbs, so will be messy without)
+// smooth function for stereo spectra (likely to be reverbs, so will be messy without smoothing)
 QVector<double> smooth(QVector<double> &data, int n){
     QVector<double> outvec(data.size());
     double output;
@@ -59,7 +59,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     // translates .ui file in actual ui
     ui->setupUi(this);
-
+    // TEMPORAL HIDING OF STUFF
+    // ui->testsound->setVisible(false);
+    // ui->testir->setVisible(false);
 
     // initialize the useful paths for no selection detection
     recordpath = "";
@@ -96,7 +98,7 @@ MainWindow::MainWindow(QWidget *parent)
     subgridpen.setColor(QRgb(0x353535));
 
     QCPTextElement *irtitle = new QCPTextElement(ui->ir_plot, "Waveform", QFont("sans", 12, QFont::Bold));
-    QCPTextElement *freqtitle = new QCPTextElement(ui->freq_plot, "Spectrum", QFont("Arial", 12, QFont::Bold));
+    QCPTextElement *freqtitle = new QCPTextElement(ui->freq_plot, "Spectrum", QFont("sans", 12, QFont::Bold));
     irtitle->setTextColor(QColor(labelrgb));
     freqtitle->setTextColor(QColor(labelrgb));
     // IR plot aspect
@@ -201,9 +203,252 @@ void MainWindow::checkall(){
     }
 }
 
+void MainWindow::convolvetest(){
+
+
+    // prepare fft
+    int testSize = testfile.getNumSamplesPerChannel();
+    int irSize = out.getNumSamplesPerChannel();
+    int fftsize = 1;
+    if (testSize >= irSize) { fftsize <<= (int)(log2(testSize - 1) + 1); }
+    else { fftsize <<= (int)(log2(irSize - 1) + 1); }
+
+    testwet.setNumSamplesPerChannel(fftsize);
+
+    PFFFT_Setup *fftsetup = pffft_new_setup(fftsize, PFFFT_REAL);
+    // CASES FOR IR FORMAT
+    // Mono IR
+    if (out.isMono()){
+        qDebug() << "ir is mono";
+        // prepare wet test file
+        testwet.setNumChannels(testfile.getNumChannels());
+        // create buffers + work buffer
+        float *test_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        float *test_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        float *wet_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        float *work = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        float *ir_buffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        // fill ir buffer
+        // one ir channel so just compute it now
+        for(int i = 0; i < fftsize; i++){
+            if (i < irSize){
+                // fill
+                ir_buffer[i] = out.samples[0][i];
+            } else {
+                // pad
+                ir_buffer[i] = 0;
+            }
+        }
+        pffft_transform(fftsetup, ir_buffer, ir_buffer, work, PFFFT_FORWARD);
+        // process loop
+        for (int channel = 0; channel < testfile.getNumChannels(); channel++){
+            // fill & pad time buffers
+            for (int i = 0; i < fftsize; i++){
+                // test file
+                if (i < testSize){
+                    // fill
+                    test_timebuffer[i] = testfile.samples[channel][i];
+                } else {
+                    // pad
+                    test_timebuffer[i] = 0;
+                }
+            }
+            // forward fft
+            pffft_transform(fftsetup, (const float*)test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+
+            // convolution
+            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_buffer, wet_freqbuffer, 1.0);
+
+            // backwards fft (re-use test_timebuffer because no more needed anyway)
+            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+
+            // write in audio file
+            for(int i = 0; i < fftsize; i++){
+                testwet.samples[channel][i] = test_timebuffer[i];
+            }
+        }
+        pffft_aligned_free(test_timebuffer);
+        pffft_aligned_free(test_freqbuffer);
+        pffft_aligned_free(wet_freqbuffer);
+        pffft_aligned_free(ir_buffer);
+        pffft_aligned_free(work);
+    }
+    // STEREO IR
+    else if (out.isStereo()){
+        qDebug() << "ir is stereo";
+        testwet.setNumChannels(2);
+        float *work = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        // pre-process ir file
+        // one buffer per channel
+        float *ir_bufferL = (float *)pffft_aligned_malloc(fftsize*sizeof(float));
+        float *ir_bufferR = (float *)pffft_aligned_malloc(fftsize*sizeof(float));
+        // fill & pad buffers
+        for(int i = 0; i< fftsize; i++){
+            if (i < irSize){
+                ir_bufferL[i] = out.samples[0][i];
+                ir_bufferR[i] = out.samples[1][i];
+            }  else {
+                ir_bufferL[i] = 0;
+                ir_bufferR[i] = 0;
+            }
+        }
+        // forward fft
+        pffft_transform(fftsetup, ir_bufferL, ir_bufferL, work, PFFFT_FORWARD);
+        pffft_transform(fftsetup, ir_bufferR, ir_bufferR, work, PFFFT_FORWARD);
+        // mono testfile
+        if (testfile.isMono()){
+            // create buffers
+            float *test_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *test_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *wet_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            // fill & pad temporal buffer
+            for (int i = 0; i < fftsize; i++){
+                if (i < testSize){
+                    test_timebuffer[i] = testfile.samples[0][i];
+                } else {
+                    test_timebuffer[i] = 0;
+                }
+            }
+            // forward fft
+            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            // convolution + writing
+            // left
+            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferL, wet_freqbuffer, 1.0);
+            // backwards fft
+            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            for (int i  = 0; i < fftsize; i++){
+                testwet.samples[0][i] = test_timebuffer[i];
+            }
+            // right
+            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferR, wet_freqbuffer, 1.0);
+            // backwards fft
+            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            for (int i  = 0; i < fftsize; i++){
+                testwet.samples[1][i] = test_timebuffer[i];
+            }
+            // delete buffers
+            pffft_aligned_free(test_timebuffer);
+            pffft_aligned_free(test_freqbuffer);
+            pffft_aligned_free(wet_freqbuffer);
+        }
+        // stereo testfile
+        else if (testfile.isStereo()){
+            // create buffers
+            float *test_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *test_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *wet_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            // LEFT
+            // fill & pad temporal buffer
+            for (int i = 0; i < fftsize; i++){
+                if (i < testSize){
+                    test_timebuffer[i] = testfile.samples[0][i];
+                } else {
+                    test_timebuffer[i] = 0;
+                }
+            }
+            // forward fft
+            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            // convolution
+            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferL, wet_freqbuffer, 1.0);
+            // backwards fft
+            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            for (int i  = 0; i < fftsize; i++){
+                testwet.samples[0][i] = test_timebuffer[i];
+            }
+            // RIGHT
+            // fill & pad temporal buffer
+            for (int i = 0; i < fftsize; i++){
+                if (i < testSize){
+                    test_timebuffer[i] = testfile.samples[1][i];
+                } else {
+                    test_timebuffer[i] = 0;
+                }
+            }
+            // forward fft
+            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            // convolution
+            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferR, wet_freqbuffer, 1.0);
+            // backwards fft
+            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            for (int i  = 0; i < fftsize; i++){
+                testwet.samples[1][i] = test_timebuffer[i];
+            }
+            // delete buffers
+            pffft_aligned_free(test_timebuffer);
+            pffft_aligned_free(test_freqbuffer);
+            pffft_aligned_free(wet_freqbuffer);
+        }
+        pffft_aligned_free(work);
+        pffft_aligned_free(ir_bufferL);
+        pffft_aligned_free(ir_bufferR);
+    }
+    // MULTICHANNEL IR
+    else {
+        testwet.setNumChannels(out.getNumChannels());
+        float *ir_buffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        float *test_timebuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        float *test_freqbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        float *wet_freqbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        float *work = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        for(int channel = 0; channel < out.getNumChannels(); channel++){
+            // fill & pad for IR and testfile
+            for (int i = 0; i < fftsize; i++){
+                if (i < irSize){
+                    ir_buffer[i] = out.samples[channel][i];
+                } else {
+                    ir_buffer[i] = 0;
+                }
+                if (i < testSize){
+                    test_timebuffer[i] = testfile.samples[channel][i];
+                } else {
+                    test_timebuffer[i] = 0;
+                }
+            }
+            // forward fft
+            pffft_transform(fftsetup, ir_buffer, ir_buffer, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            // convolution
+            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_buffer, wet_freqbuffer, 1.0);
+            // backwards fft
+            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            // write
+            for(int i = 0; i < fftsize; i++){
+                testwet.samples[channel][i] = test_timebuffer[i];
+            }
+        }
+        // destroy buffers
+        pffft_aligned_free(work);
+        pffft_aligned_free(ir_buffer);
+        pffft_aligned_free(test_timebuffer);
+        pffft_aligned_free(test_freqbuffer);
+        pffft_aligned_free(wet_freqbuffer);
+    }
+
+    // normalization
+    std::vector<double> maxs;
+    std::vector<double> mins;
+    for (int chan = 0; chan < out.getNumChannels(); chan++)
+    {
+        maxs.push_back(*std::max_element(testwet.samples[chan].begin(), testwet.samples[chan].end()));
+        mins.push_back(abs(*std::min_element(testwet.samples[chan].begin(), testwet.samples[chan].end())));
+    }
+    double max = *std::max_element(maxs.begin(), maxs.end());
+    double min = *std::max_element(mins.begin(), mins.end());
+    double absmax = std::max(max, min);
+    // normalize all output channels
+    for (int channel = 0; channel < testwet.getNumChannels(); channel++)
+    {
+        for (int i = 0; i < testwet.getNumSamplesPerChannel(); i++)
+        {
+            testwet.samples[channel][i] /= absmax;
+        }
+    }
+    // trimming ?
+
+}
+
 int MainWindow::deconvolve(){
-    // load existing files
-    // recording.load(recordpath.toStdString()); // CHANGE TO FUNC ARG
+
     // directly assign the number of output channels
     out.setNumChannels(recording.getNumChannels());
 
@@ -227,7 +472,11 @@ int MainWindow::deconvolve(){
     if (recSize >= invessSize)
     { fftsize <<= (int)(log2(recSize - 1) + 1); }
     else { fftsize <<= (int)(log2(invessSize - 1) + 1); }
+
+
+    // resize the out buffer
     out.setNumSamplesPerChannel(fftsize);
+
     // get necessary buffers
     float *invess_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
     // frequency domain buffers
@@ -321,7 +570,7 @@ int MainWindow::deconvolve(){
     double min = *std::max_element(mins.begin(), mins.end());
     double absmax = std::max(max, min);
     // normalize all output channels
-    for (int channel = 0; channel < out.getNumChannels(); channel++)
+    for (int channel = 0; channel < recording.getNumChannels(); channel++)
     {
         for (int i = 0; i < out.getNumSamplesPerChannel(); i++)
         {
@@ -335,7 +584,7 @@ int MainWindow::deconvolve(){
     // trim right side for cab IRs
     // also trim right side because cab IRs have to be short
     double thresh = 0.0005;
-    int cutlength = out.getNumSamplesPerChannel();
+    int cutlength = out.samples[0].size();
     bool threshhit = false;
     while (!threshhit){
         if (std::abs(out.samples[0][cutlength]) > thresh){
@@ -348,7 +597,7 @@ int MainWindow::deconvolve(){
     //- trim left side
     if (ui->trimbox->isChecked()){
         // trim convolution delay
-        for (int chan = 0; chan < out.getNumChannels(); chan++)
+        for (int chan = 0; chan < recording.getNumChannels(); chan++)
         {
             out.samples[chan].erase(out.samples[chan].begin(), std::next(out.samples[chan].begin(), invessSize - (ui->srate->text().toInt()*0.2)));
         }
@@ -366,7 +615,7 @@ int MainWindow::deconvolve(){
             out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
             // also trim right side because cab IRs have to be short
             thresh = 0.0005;
-            cutlength = out.getNumSamplesPerChannel();
+            cutlength = out.samples[0].size();
             threshhit = false;
             while (!threshhit){
                 if (std::abs(out.samples[0][cutlength]) > thresh){
@@ -395,7 +644,7 @@ int MainWindow::deconvolve(){
                 QMessageBox::critical(this, "No IR length provided", "Please specify the desired length of your IR, or uncheck the \"Custom IR Length\" option.");
             } else {
                 int length = ui->irlength->text().toDouble()*0.001 * ui->srate->text().toInt();
-                for (int chan=0; chan < out.getNumChannels(); chan++){
+                for (int chan=0; chan < recording.getNumChannels(); chan++){
                     out.samples[chan].erase(std::next(out.samples[chan].begin(), length), out.samples[chan].end());
                 }
             }
@@ -468,12 +717,20 @@ void MainWindow::limYZoomFreq(QCPRange range){
 // buttons
 void MainWindow::on_createir_button_clicked()
 {
+    // temporarily disable test ir button to show that it's computing
+    ui->testir->setEnabled(false);
     // remove previous temporary output file
 
     QFile tempoutfile(outuuidurl);
 
     if (tempoutfile.exists()){
         tempoutfile.remove();
+    }
+
+    QFile tempwetfile(testuuidurl);
+
+    if (tempwetfile.exists()){
+        tempwetfile.remove();
     }
     // check sample rates (NEED TO BE PCM)
     // TODO : ADD QMESSAGEBOX IF NOT PCM)
@@ -482,9 +739,15 @@ void MainWindow::on_createir_button_clicked()
     }
     // recordings are ok
 
+
+
     // COMPUTE DECONVOLUTION BY REVERSE CONVOLUTION TECHNIQUE
     int fftsize = this->deconvolve();
+    out.setSampleRate(ui->srate->text().toInt());
 
+
+
+    // bit depth
     switch(ui->bitdepth_combo->currentIndex())
     {
     case 0: // 16 bits
@@ -493,12 +756,14 @@ void MainWindow::on_createir_button_clicked()
     case 1: // 24 bits
         out.setBitDepth(24);
         break;
-    case 2: // 32bits
+    case 2: // 32bits, need to create another AudioFile element to prevent floating point conversion
         out.setBitDepth(32);
+
         break;
     }
 
-    out.setSampleRate(ui->srate->text().toInt());
+    // fill the output file with buffer data
+
 
     // OUTPUT
     const auto uuid = QUuid::createUuid();
@@ -512,17 +777,14 @@ void MainWindow::on_createir_button_clicked()
             autosaveroot.mkdir("IR");
         }
         savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
-        // TODO : SAVE FILE AT SAVEPATHAUTO
         out.save(savepathauto.toStdString());
         QFile::copy(savepathauto, new_filename);
     } else {
-        // TODO : SAVE FILE AT SAVEPATHCSTM
         out.save(savepathcstm.toStdString());
         QFile::copy(savepathcstm, new_filename);
     }
 
     outuuidurl = new_filename;
-    // outuuidurl = new_filename ;
 
     // PLOTTING
     // set default yaxis ticker for ir_plot
@@ -719,19 +981,50 @@ void MainWindow::on_createir_button_clicked()
 
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);
+    ui->testsound->setEnabled(true);
+
+    // tests for reconvolution of testfile
+    if (testfile.getNumChannels() > 2 && out.getNumChannels() <= 2){
+        ui->testsound->setText("Browse test file");
+        ui->testir->setEnabled(false);
+        qDebug() << "multi testfile for non multi IR";
+        return;
+    } else if (testfile.getSampleRate() != out.getSampleRate()){
+        ui->testsound->setText("Browse test file");
+        ui->testir->setEnabled(false);
+        qDebug() << "non matching sample rates for testfile and IR";
+        return;
+    }
+    else {
+        this->convolvetest();
+        // save test wet
+        testwet.setSampleRate(out.getSampleRate());
+        testwet.setBitDepth(24);
+        const auto uuid = QUuid::createUuid();
+        auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
+        testuuidurl = new_filename;
+
+        testwet.save(new_filename.toStdString());
+        ui->testir->setEnabled(true);
+    }
 }
 
 
 void MainWindow::on_browsesweep_button_clicked()
 {
     // get path of sweep
-    QString sweeppath = QFileDialog::getOpenFileName(this, "Select a sweep file", "C://","WAV files (*.wav)");
+    sweeppath = QFileDialog::getOpenFileName(this, "Select the sweep file used for rercording the response", "C://","WAV files (*.wav)");
     if (sweeppath == ""){
         this->checkall();
         return;
     }
     // store sweep data & info
-    sweep.load(sweeppath.toStdString());
+    bool loaded = sweep.load(sweeppath.toStdString());
+    if (!loaded){
+        QMessageBox::critical(this, "Invalid sweep path", "Selected sweep or element in its path contain special characters (accents, punctuation...) that cannot be read. "
+                                                          "Either rename the file or the problematic(s) element(s) in its path, or select another file.");
+        return;
+    }
     if (sweep.getBitDepth()>32){
         QMessageBox::critical(this, "64 bits files not supported", "The selected file has a 64-bit bit depth."
                                 "Only 16, 24 & 32-bit depths are supported. Please select a sweep file with compatible bit depth.");
@@ -804,13 +1097,14 @@ void MainWindow::on_files_list_clicked(const QModelIndex &index)
     // check if special characters in file name
     bool recloaded = recording.load(recordpath.toStdString());
     if (!recloaded){
-        QMessageBox::critical(this,"File name with special characters","The file you selected has special characters (letters with accents, punctuation...) that cannot be read. Please either rename your file, or select another one.");
+        QMessageBox::critical(this,"File name with special characters","Selected file or element(s) in its path contain special characters (accents, punctuation...) that cannot be read. "
+                                                                        "Either rename the file or the problematic(s) element(s) in its path, or select another file.");
         this->checkall();
         return;
     }
-    if (sweep.getSampleRate() != recording.getSampleRate()){
+    if (sweep.getSampleRate() != recording.getSampleRate() && ui->browsesweep_button->text() != "Browse sweep file"){
         QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
-                                                                    + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same."
+                                                                    + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same. "
                                                                     + "The resulting IR might not be what you expect.");
     }
     // automatically set output samplerate to recording's samplerate if option is checked
@@ -824,10 +1118,17 @@ void MainWindow::on_files_list_clicked(const QModelIndex &index)
 
 void MainWindow::on_browseout_button_clicked()
 {
+    AudioFile<double> test;
+
     savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", "C://", "WAV files (*.wav)");
     QStringList list = savepathcstm.split("/");
     // change button text to file name
-    ui->browseout_button->setText(list[list.size()-1]);
+    if (savepathcstm == ""){
+        ui->browseout_button->setText("Browse output");
+    } else {
+        ui->browseout_button->setText(list[list.size()-1]);
+    }
+    bool loaded = test.load(savepathcstm.toStdString());
     this->checkall();
 }
 
@@ -907,14 +1208,113 @@ void MainWindow::on_showgraphsbox_stateChanged(int state)
         ui->widget_3->setMaximumHeight(290);
         size.setHeight(700);
         ui->widget_3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        this->setMinimumHeight(610);
     } else {
         ui->splitter->setVisible(false);
         size.setHeight(300);
         ui->widget_3->setMaximumHeight(16777215);
         ui->widget_3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+        this->setMinimumHeight(300);
     }
     this->resize(size);
 }
 
 
+void MainWindow::on_testsound_clicked()
+{
+    QFile tempwetfile(testuuidurl);
 
+    if (tempwetfile.exists()){
+        tempwetfile.remove();
+    }
+    //get the user-defined test file
+    testpath = QFileDialog::getOpenFileName(this, "Select the audio file you want to try with the IR", "C://", "WAV files (*.wav)");
+    // special characters in file name/path
+    if (testpath == ""){
+        return;
+    }
+    bool loaded = testfile.load(testpath.toStdString());
+    if (!loaded){
+        QMessageBox::critical(this, "Invalid test file path", "Selected file or element(s) in its path contain special characters (accents, punctuation...) that cannot be read. "
+                                                              "Either rename the file or the problematic(s) element(s) in its path, or select another file.");
+        return;
+    }
+    // control test file (length, format...)
+    if (testfile.getBitDepth() > 32){
+        QMessageBox::critical(this, "Invalid bitdepth", "Selected file has a " + QString::number(testfile.getBitDepth()) + " bit bitdepth. "
+                                                        "Supported bitdepths are 16, 24 and 32 bit PCM.");
+        return;
+    }
+    // if multichannel testfile but mono/stereo ir
+    if (testfile.getNumChannels() > 2 && out.getNumChannels() <= 2){
+        QMessageBox::critical(this, "Multichannel test file for non-multi channel IR", "Selected file is multichannel but IR is not. Please select either a mono or stereo test file.");
+        return;
+    }
+    //if multichannel IR but non multichannel testfile
+    if(out.getNumChannels()>2 && testfile.getNumChannels() <= 2){
+        QMessageBox::critical(this, "Multichannel incompatibility", "Selected test file is not multichannel whereas the IR is. Please select a multichannel test file.");
+        return;
+    }
+
+    // if non matching sample rates
+    if (testfile.getSampleRate() != out.getSampleRate()){
+        QMessageBox::critical(this, "Non-matching sample rates", "The test file and the IR have a different sample rate (" + QString::number(testfile.getSampleRate()) + "Hz and " + QString::number(out.getSampleRate())+ "Hz). "
+                                                                 "Please select a test file with a sample rate of " + QString::number(out.getSampleRate()) + "Hz.");
+        return;
+    }
+
+    // length (just to warn that convolution will be long)
+    if (testfile.getNumSamplesPerChannel() > 60 * out.getSampleRate()){
+        // user can continue to proceed with buttons
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::warning(this, "Long test file", "Selected test file is more than a minute long, the longer your test file is, the longer it takes to compute it. Proceed anyways ?", QMessageBox::Yes|QMessageBox::No);
+        if (reply == QMessageBox::No){
+            ui->testsound->setText("Browse test sound");
+            return;
+        }
+    }
+    // change button text to file name
+    if (testpath == ""){
+        ui->browseout_button->setText("Browse test sound");
+    } else {
+        QFileInfo testinfo(testpath);
+        QString testname(testinfo.baseName());
+        ui->testsound->setText(testname);
+    }
+
+    // convolution
+    if (testfile.getLengthInSeconds() > 10){
+        testfile.setNumSamplesPerChannel(10*testfile.getSampleRate());
+        qDebug() << "cropped testfile to 10secs length";
+    }
+    this->convolvetest();
+    // save test wet
+    testwet.setSampleRate(out.getSampleRate());
+    testwet.setBitDepth(24);
+
+
+    const auto uuid = QUuid::createUuid();
+    auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
+    testuuidurl = new_filename;
+
+    testwet.save(new_filename.toStdString());
+    // when all done, activate the test ir button
+    ui->testir->setEnabled(true);
+
+}
+
+
+void MainWindow::on_testir_clicked()
+{
+    QSoundEffect *wetsound = new QSoundEffect;
+    if (wetsound->isPlaying()){
+        wetsound->stop();
+        wetsound->setSource(QUrl::fromLocalFile(outuuidurl));
+        return;
+    } else {
+        wetsound->setSource(QUrl::fromLocalFile(testuuidurl));
+        wetsound->setVolume(1.0f);
+        wetsound->play();
+        return;
+    }
+}

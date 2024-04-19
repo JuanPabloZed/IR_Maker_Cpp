@@ -33,6 +33,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
         qcustomplot.cpp qcustomplot.h
         icon.o
+        AudioFile.h
 
 
     )
