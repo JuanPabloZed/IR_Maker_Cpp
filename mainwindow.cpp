@@ -254,7 +254,7 @@ void MainWindow::convolvetest(){
                 }
             }
             // forward fft
-            pffft_transform(fftsetup, (const float*)test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
 
             // convolution
             pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_buffer, wet_freqbuffer, 1.0);
@@ -265,6 +265,11 @@ void MainWindow::convolvetest(){
             // write in audio file
             for(int i = 0; i < fftsize; i++){
                 testwet.samples[channel][i] = test_timebuffer[i];
+            }
+
+            // clear wet buffer before refill
+            for (int i = 0; i < fftsize; i++){
+                wet_freqbuffer[i] = 0;
             }
         }
         pffft_aligned_free(test_timebuffer);
@@ -319,6 +324,10 @@ void MainWindow::convolvetest(){
             for (int i  = 0; i < fftsize; i++){
                 testwet.samples[0][i] = test_timebuffer[i];
             }
+            // clear wet buffer before refill
+            for (int i = 0; i < fftsize; i++){
+                wet_freqbuffer[i] = 0;
+            }
             // right
             pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferR, wet_freqbuffer, 1.0);
             // backwards fft
@@ -354,6 +363,10 @@ void MainWindow::convolvetest(){
             pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
             for (int i  = 0; i < fftsize; i++){
                 testwet.samples[0][i] = test_timebuffer[i];
+            }
+            // clear wet buffer before refill
+            for (int i = 0; i < fftsize; i++){
+                wet_freqbuffer[i] = 0;
             }
             // RIGHT
             // fill & pad temporal buffer
@@ -414,6 +427,10 @@ void MainWindow::convolvetest(){
             // write
             for(int i = 0; i < fftsize; i++){
                 testwet.samples[channel][i] = test_timebuffer[i];
+            }
+            // clear wet buffer before refill
+            for (int i = 0; i < fftsize; i++){
+                wet_freqbuffer[i] = 0;
             }
         }
         // destroy buffers
