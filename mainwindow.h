@@ -87,6 +87,12 @@ private slots:
 
     void on_testir_clicked();
 
+    void on_irlengthSamples_editingFinished();
+
+    void on_irlength_editingFinished();
+
+    void on_irlengthSamples_textChanged(const QString &arg1);
+
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *filemodel;

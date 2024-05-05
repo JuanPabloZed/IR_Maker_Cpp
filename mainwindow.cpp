@@ -167,6 +167,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->freq_plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(limXZoomFreq(QCPRange)));
     connect(ui->freq_plot->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(limYZoomFreq(QCPRange)));
 
+    // only ints can be given for custom samples number
+    QRegularExpression re("^[0-9]{0,10}");
+    QRegularExpressionValidator* validator = new QRegularExpressionValidator(re, this);
+    ui->irlengthSamples->setValidator(validator);
+
 }
 
 // define destructor
@@ -660,7 +665,7 @@ int MainWindow::deconvolve(){
             if (ui->irlength->text() == ""){
                 QMessageBox::critical(this, "No IR length provided", "Please specify the desired length of your IR, or uncheck the \"Custom IR Length\" option.");
             } else {
-                int length = ui->irlength->text().toDouble()*0.001 * ui->srate->text().toInt();
+                int length = ui->irlengthSamples->text().toInt();
                 for (int chan=0; chan < recording.getNumChannels(); chan++){
                     out.samples[chan].erase(std::next(out.samples[chan].begin(), length), out.samples[chan].end());
                 }
@@ -1171,7 +1176,20 @@ void MainWindow::on_autosave_radio_toggled(bool checked)
 
 
 void MainWindow::on_srate_textChanged(const QString &arg1)
-{ this->checkall(); }
+{
+    if (ui->srate->text() != "" && ui->srate->text() != "0"){
+        ui->irlengthbox->setEnabled(true);
+        if (ui->irlengthbox->isChecked()){
+            ui->irlength->setEnabled(true);
+            ui->irlengthSamples->setEnabled(true);
+        }
+    } else {
+        ui->irlengthbox->setEnabled(false);
+        ui->irlength->setEnabled(false);
+        ui->irlengthSamples->setEnabled(false);
+    }
+    this->checkall();
+}
 
 
 void MainWindow::on_sweepgen_button_clicked()
@@ -1197,9 +1215,11 @@ void MainWindow::on_irlengthbox_stateChanged(int state)
 {
     if (state == Qt::Checked){
         ui->irlength->setEnabled(true);
+        ui->irlengthSamples->setEnabled(true);
 
     } else {
         ui->irlength->setEnabled(false);
+        ui->irlengthSamples->setEnabled(false);
     }
 }
 
@@ -1335,3 +1355,25 @@ void MainWindow::on_testir_clicked()
         return;
     }
 }
+
+void MainWindow::on_irlengthSamples_editingFinished()
+{
+    float durms = ui->irlengthSamples->text().toFloat() / ui->srate->text().toFloat() * 1000;
+    ui->irlength->setText(QString::number(durms));
+}
+
+
+void MainWindow::on_irlength_editingFinished()
+{
+    float numsamples = ui->irlength->text().toFloat() / 1000 * ui->srate->text().toFloat();
+    ui->irlengthSamples->setText(QString::number((int)numsamples));
+}
+
+
+void MainWindow::on_irlengthSamples_textChanged(const QString &arg1)
+{
+    if (ui->irlengthSamples->text().toFloat() != ui->irlengthSamples->text().toInt()){
+        ui->irlengthSamples->setText(QString::number(ui->irlengthSamples->text().toInt()));
+    }
+}
+
