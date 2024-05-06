@@ -1035,7 +1035,7 @@ void MainWindow::on_createir_button_clicked()
 void MainWindow::on_browsesweep_button_clicked()
 {
     // get path of sweep
-    sweeppath = QFileDialog::getOpenFileName(this, "Select the sweep file used for rercording the response", "C://","WAV files (*.wav)");
+    sweeppath = QFileDialog::getOpenFileName(this, "Select the sweep file used for rercording the response", lastSweepDir,"WAV files (*.wav)");
     if (sweeppath == ""){
         this->checkall();
         return;
@@ -1075,7 +1075,7 @@ void MainWindow::on_browsesweep_button_clicked()
     QFileInfo sweepinfo(sweeppath);
     QString sweepname(sweepinfo.baseName());
     ui->browsesweep_button->setText(sweepname);
-
+    lastSweepDir = sweepinfo.dir().absolutePath();
     sweep.load(sweeppath.toStdString());
     this->checkall();
 }
@@ -1098,6 +1098,25 @@ void MainWindow::on_customsave_radio_toggled(bool checked)
     } else {
         ui->browseout_button->setEnabled(checked);
     }
+    this->checkall();
+}
+
+
+void MainWindow::on_browseout_button_clicked()
+{
+    AudioFile<double> test;
+
+    savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", lastSaveDir, "WAV files (*.wav)");
+    QFileInfo customOutInfo(savepathcstm);
+    QStringList list = savepathcstm.split("/");
+    // change button text to file name
+    if (savepathcstm == ""){
+        ui->browseout_button->setText("Browse output");
+    } else {
+        ui->browseout_button->setText(list[list.size()-1]);
+        lastSaveDir = customOutInfo.dir().absolutePath();
+    }
+    bool loaded = test.load(savepathcstm.toStdString());
     this->checkall();
 }
 
@@ -1134,23 +1153,6 @@ void MainWindow::on_files_list_clicked(const QModelIndex &index)
         ui->srate->setText(QString::number(recording.getSampleRate()));
     }
 
-    this->checkall();
-}
-
-
-void MainWindow::on_browseout_button_clicked()
-{
-    AudioFile<double> test;
-
-    savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", "C://", "WAV files (*.wav)");
-    QStringList list = savepathcstm.split("/");
-    // change button text to file name
-    if (savepathcstm == ""){
-        ui->browseout_button->setText("Browse output");
-    } else {
-        ui->browseout_button->setText(list[list.size()-1]);
-    }
-    bool loaded = test.load(savepathcstm.toStdString());
     this->checkall();
 }
 
@@ -1355,6 +1357,7 @@ void MainWindow::on_testir_clicked()
         return;
     }
 }
+
 
 void MainWindow::on_irlengthSamples_editingFinished()
 {

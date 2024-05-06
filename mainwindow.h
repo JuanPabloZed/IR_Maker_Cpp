@@ -40,6 +40,8 @@ public:
     void convolvetest();
     QString outuuidurl;
     QString testuuidurl;
+    QString lastSweepDir = "C://";
+    QString lastSaveDir = "C://";
 
 
 private slots:

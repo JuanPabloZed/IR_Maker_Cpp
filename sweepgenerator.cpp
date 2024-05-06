@@ -80,7 +80,8 @@ void SweepGenerator::limXZoom(QCPRange range){
 
 void SweepGenerator::on_save_button_clicked()
 {
-    savepath = QFileDialog::getSaveFileName(this,"Select saving location","C://", "WAV files (*.wav)");
+    savepath = QFileDialog::getSaveFileName(this,"Select saving location", lastsavedir, "WAV files (*.wav)");
+    QFileInfo saveinfo(savepath);
     QStringList list = savepath.split("/");
     if (list[list.size()-1] == QString("")){
         ui->save_button->setText("Browse...");
@@ -89,6 +90,7 @@ void SweepGenerator::on_save_button_clicked()
     } else {
         ui->save_button->setText(list[list.size()-1]);
         ui->gen_button->setEnabled(true);
+        lastsavedir = saveinfo.dir().absolutePath();
     }
 }
 

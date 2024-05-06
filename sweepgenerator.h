@@ -18,8 +18,10 @@ public:
     explicit SweepGenerator(QWidget *parent = nullptr);
     ~SweepGenerator();
     QString savepath;
+    QString lastsavedir = "C://";
 
     AudioFile<int> sweep;
+
 
     QSoundEffect sound;
 
