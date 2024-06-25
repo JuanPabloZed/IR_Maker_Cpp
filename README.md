@@ -16,7 +16,7 @@ This application is based on the use of Angelo Farina's ESS method. To sum up, t
  
 4- Turn on IR Maker and let it guide you through the process !
 
- **Important note** : the application only supports 16, 24 & 32 bit WAV files.
+ **Important note** : the application only supports 16, 24 & 32 bit *PCM* WAV files.
 
 Multichannel compatibility is in the works too, stay tuned !
 
