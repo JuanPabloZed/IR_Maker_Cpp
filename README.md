@@ -2,7 +2,7 @@ C++ implementation of my python project [https://github.com/JuanPabloZed/IR_Make
 
 Does the same thing as Voxengo's Deconvolver, but for free and with more features (IR visualisation, a nice interface...).
 
-
+Contact : nathan.zwahlen70@gmail.com
 
 
 ## HOW TO MAKE AN IR
