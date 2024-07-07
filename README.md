@@ -1,6 +1,6 @@
 C++ implementation of my python project [https://github.com/JuanPabloZed/IR_Maker](url).
 
-Does the same thing as Voxengo's Deconvolver, but for free and with more features (IR visualisation, a nice interface...).
+Does the same thing as Voxengo's Deconvolver (https://www.voxengo.com/product/deconvolver/), but for free and with more features (IR visualisation, a nice interface...).
 
 Contact : nathan.zwahlen70@gmail.com
 
