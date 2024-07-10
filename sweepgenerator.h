@@ -22,7 +22,6 @@ public:
 
     AudioFile<int> sweep;
 
-
     QSoundEffect sound;
 
 private slots:

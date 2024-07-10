@@ -785,6 +785,12 @@ void MainWindow::on_createir_button_clicked()
                                                                         + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same. "
                                                                         + "The resulting IR might not be what you expect.");
         }
+        if (recording.getNumSamplesPerChannel() < sweep.getNumSamplesPerChannel()){
+            QMessageBox::critical(this,"File(s) in batch shorter than sweep","At least one of the selected files is shorter than the sweep. The operation is impossible. "
+                                                                   "Please choose files that are longer than the sweep, or a shorter sweep.");
+            this->checkall();
+            return;
+        }
         // automatically set output samplerate to recording's samplerate if option is checked
         if (ui->autosr_check->isChecked()){
             ui->srate->setText(QString::number(recording.getSampleRate()));
@@ -1082,6 +1088,8 @@ void MainWindow::on_createir_button_clicked()
         ui->playir_button->setEnabled(false);
         ui->testir->setEnabled(false);
         ui->testsound->setEnabled(false);
+        ui->ir_plot->clearGraphs();
+        ui->freq_plot->clearGraphs();
     }
 
 }
@@ -1216,6 +1224,12 @@ void MainWindow::on_files_list_clicked(const QModelIndex &index)
             QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
                                                                         + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same. "
                                                                         + "The resulting IR might not be what you expect.");
+        }
+        if (recording.getNumSamplesPerChannel() < sweep.getNumSamplesPerChannel()){
+            QMessageBox::critical(this,"File shorter than sweep","Selected file is shorter than the sweep. The operation is impossible. "
+                                                                             "Please choose files that are longer than the sweep, or a shorter sweep.");
+            this->checkall();
+            return;
         }
         // automatically set output samplerate to recording's samplerate if option is checked
         if (ui->autosr_check->isChecked()){
