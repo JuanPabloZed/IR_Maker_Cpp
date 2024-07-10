@@ -28,6 +28,9 @@ public:
     QString savepathauto; // for autosave
     QString savepathcstm; // for custom save
 
+    // batch rendering option
+    bool batchrender = false;
+
     // audio data
     AudioFile<double> sweep;
     AudioFile<double> recording;
@@ -67,11 +70,7 @@ private slots:
 
     void on_about_button_clicked();
 
-    void on_beg_freq_textChanged(const QString &arg1);
-
     void on_autosave_radio_toggled(bool checked);
-
-    void on_end_freq_textChanged(const QString &arg1);
 
     void on_srate_textChanged(const QString &arg1);
 

@@ -185,16 +185,12 @@ MainWindow::~MainWindow()
 void MainWindow::checkall(){
     if (ui->browsesweep_button->text() == "Browse sweep file"
         || ui->browsesweep_button->text() == ""
-        || ui->beg_freq->text() == "" || ui->beg_freq->text() == "0"
-        || ui->end_freq->text() == "" || ui->beg_freq->text() == "0"
         || recordpath == ""
         || ui->srate->text()== "" || ui->srate->text() == "0")
     { ui->createir_button->setEnabled(false); }
 
     else if (ui->browsesweep_button->text() != "Browse sweep file"
          && ui->browsesweep_button->text() != ""
-         && ui->beg_freq->text() != "" && ui->beg_freq->text() != "0"
-         && ui->end_freq->text() != "" && ui->end_freq->text() != "0"
          && recordpath !=""
          && ui->srate->text()!= "" && ui->srate->text() != "0")
     {
@@ -477,6 +473,7 @@ int MainWindow::deconvolve(){
     // create invess
     std::vector<float> invess_temp(sweep.getNumSamplesPerChannel());
     double k;
+    // double R = log((int)(sweep.getSampleRate()*0.5)/20.0); // change to values in ui
     double R = log(20000.0/20.0); // change to values in ui
     int i = 0;
     for (std::vector<double>::reverse_iterator riter = sweep.samples[0].rbegin();
@@ -764,51 +761,79 @@ void MainWindow::on_createir_button_clicked()
 
 
     // COMPUTE DECONVOLUTION BY REVERSE CONVOLUTION TECHNIQUE
-    int fftsize = this->deconvolve();
-    out.setSampleRate(ui->srate->text().toInt());
-
-
-
-    // bit depth
-    switch(ui->bitdepth_combo->currentIndex())
+    // BEGIN FOR LOOP
+    QModelIndexList selectedList = ui->files_list->selectionModel()->selectedIndexes();
+    int fftsize = 1;
+    for (int index = 0; index < selectedList.size(); index++)
     {
-    case 0: // 16 bits
-        out.setBitDepth(16);
-        break;
-    case 1: // 24 bits
-        out.setBitDepth(24);
-        break;
-    case 2: // 32bits, need to create another AudioFile element to prevent floating point conversion
-        out.setBitDepth(32);
-
-        break;
-    }
-
-    // fill the output file with buffer data
-
-
-    // OUTPUT
-    const auto uuid = QUuid::createUuid();
-    auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
-
-    if (ui->autosave_radio->isChecked()){
-        QDir autosaveroot(recorddir);
-        QFileInfo recinfo(recordpath);
-        // create output folder if not already done
-        if (!QDir(recorddir + QString("/IR")).exists()){
-            autosaveroot.mkdir("IR");
+        // SELECT RECORDING FILE IN SELECTED LIST
+        recordpath  = filemodel->filePath(selectedList[index]);
+        // check if special characters in file name
+        bool recloaded = recording.load(recordpath.toStdString());
+        if (!recloaded){
+            QMessageBox::critical(this,"File name with special characters","Selected file(s) or element(s) in its path contain special characters (accents, punctuation...) that cannot be read. "
+                                                                             "Either rename the file or the problematic element(s) in its path, or select another file.");
+            this->checkall();
+            return;
         }
-        savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
-        out.save(savepathauto.toStdString());
-        QFile::copy(savepathauto, new_filename);
-    } else {
-        out.save(savepathcstm.toStdString());
-        QFile::copy(savepathcstm, new_filename);
+        if (sweep.getSampleRate() != recording.getSampleRate() && ui->browsesweep_button->text() != "Browse sweep file"){
+            QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
+                                                                        + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same. "
+                                                                        + "The resulting IR might not be what you expect.");
+        }
+        // automatically set output samplerate to recording's samplerate if option is checked
+        if (ui->autosr_check->isChecked()){
+            ui->srate->setText(QString::number(recording.getSampleRate()));
+        }
+        fftsize = this->deconvolve();
+        out.setSampleRate(ui->srate->text().toInt());
+
+
+
+        // bit depth
+        switch(ui->bitdepth_combo->currentIndex())
+        {
+        case 0: // 16 bits
+            out.setBitDepth(16);
+            break;
+        case 1: // 24 bits
+            out.setBitDepth(24);
+            break;
+        case 2: // 32bits, need to create another AudioFile element to prevent floating point conversion
+            out.setBitDepth(32);
+
+            break;
+        }
+
+        // fill the output file with buffer data
+
+
+        // OUTPUT
+        const auto uuid = QUuid::createUuid();
+        auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
+
+        if (ui->autosave_radio->isChecked()){
+            QDir autosaveroot(recorddir);
+            QFileInfo recinfo(recordpath);
+            // create output folder if not already done
+            if (!QDir(recorddir + QString("/IR")).exists()){
+                autosaveroot.mkdir("IR");
+            }
+            savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
+            out.save(savepathauto.toStdString());
+            QFile::copy(savepathauto, new_filename);
+        } else {
+            out.save(savepathcstm.toStdString());
+            QFile::copy(savepathcstm, new_filename);
+        }
+
+        outuuidurl = new_filename;
     }
+    //END FOR LOOP
 
-    outuuidurl = new_filename;
-
-    // PLOTTING
+    // PLOTTING (no plot if batch rendering)
+    if (selectedList.size()==1)
+    {
     // set default yaxis ticker for ir_plot
     ui->ir_plot->yAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
     // MONO OUTPUT
@@ -983,8 +1008,8 @@ void MainWindow::on_createir_button_clicked()
             ui->ir_plot->addGraph()->setData(x, y[chan]);
             ui->ir_plot->graph(chan)->setPen(graphPen);
         }
-        QVector<QString> yticklabels;
-        QVector<double> yticks;
+        // QVector<QString> yticklabels;
+        // QVector<double> yticks;
         QSharedPointer<QCPAxisTickerText> yticker(new QCPAxisTickerText);
         ui->ir_plot->yAxis->setTicker(yticker);
         for (int i = 0; i < out.getNumChannels() ; i++){
@@ -999,6 +1024,10 @@ void MainWindow::on_createir_button_clicked()
 
         ui->ir_plot->replot();
 
+    }
+
+    } else {
+        ui->showgraphsbox->setChecked(false);
     }
 
     // now that ir is created, it's possible to play it
@@ -1134,25 +1163,27 @@ void MainWindow::on_autosr_check_stateChanged(int arg1)
 
 void MainWindow::on_files_list_clicked(const QModelIndex &index)
 {
-    recordpath  = filemodel->filePath(index);
-    // check if special characters in file name
-    bool recloaded = recording.load(recordpath.toStdString());
-    if (!recloaded){
-        QMessageBox::critical(this,"File name with special characters","Selected file or element(s) in its path contain special characters (accents, punctuation...) that cannot be read. "
-                                                                        "Either rename the file or the problematic(s) element(s) in its path, or select another file.");
-        this->checkall();
-        return;
+    if (ui->files_list->selectionModel()->selectedIndexes().size() == 1)
+    {
+        recordpath  = filemodel->filePath(index);
+        // check if special characters in file name
+        bool recloaded = recording.load(recordpath.toStdString());
+        if (!recloaded){
+            QMessageBox::critical(this,"File name with special characters","Selected file or element(s) in its path contain special characters (accents, punctuation...) that cannot be read. "
+                                                                            "Either rename the file or the problematic(s) element(s) in its path, or select another file.");
+            this->checkall();
+            return;
+        }
+        if (sweep.getSampleRate() != recording.getSampleRate() && ui->browsesweep_button->text() != "Browse sweep file"){
+            QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
+                                                                        + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same. "
+                                                                        + "The resulting IR might not be what you expect.");
+        }
+        // automatically set output samplerate to recording's samplerate if option is checked
+        if (ui->autosr_check->isChecked()){
+            ui->srate->setText(QString::number(recording.getSampleRate()));
+        }
     }
-    if (sweep.getSampleRate() != recording.getSampleRate() && ui->browsesweep_button->text() != "Browse sweep file"){
-        QMessageBox::warning(this, "Non-matching sample rates", "Sample rates for the sweep (" + QString::number(sweep.getSampleRate())
-                                                                    + "Hz) and for the recording (" + QString::number(recording.getSampleRate()) + " Hz) are not the same. "
-                                                                    + "The resulting IR might not be what you expect.");
-    }
-    // automatically set output samplerate to recording's samplerate if option is checked
-    if (ui->autosr_check->isChecked()){
-        ui->srate->setText(QString::number(recording.getSampleRate()));
-    }
-
     this->checkall();
 }
 
@@ -1163,14 +1194,6 @@ void MainWindow::on_about_button_clicked()
     aboutdial.exec();
 
 }
-
-
-void MainWindow::on_beg_freq_textChanged(const QString &arg1)
-{ this->checkall(); }
-
-
-void MainWindow::on_end_freq_textChanged(const QString &arg1)
-{ this->checkall(); }
 
 
 void MainWindow::on_autosave_radio_toggled(bool checked)

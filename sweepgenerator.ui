@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>562</width>
-    <height>396</height>
+    <width>563</width>
+    <height>571</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -232,18 +232,18 @@ border: none;
        <height>260</height>
       </size>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,2">
       <item>
        <widget class="QGroupBox" name="params_box">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>160</width>
           <height>250</height>
          </size>
         </property>
@@ -258,114 +258,8 @@ border: none;
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <layout class="QFormLayout" name="formLayout">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Beginning freq. (Hz)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="beg_freq">
-             <property name="text">
-              <string>20</string>
-             </property>
-             <property name="placeholderText">
-              <string>in Hz</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Ending freq. (Hz)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="end_freq">
-             <property name="text">
-              <string>20000</string>
-             </property>
-             <property name="placeholderText">
-              <string>in Hz</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_3">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Duration (sec)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="duration">
-             <property name="text">
-              <string>10</string>
-             </property>
-             <property name="placeholderText">
-              <string>in sec</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_4">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Sample rate (Hz)</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="4" column="1">
             <widget class="QComboBox" name="srate">
              <property name="cursor">
               <cursorShape>PointingHandCursor</cursorShape>
@@ -409,13 +303,109 @@ border: none;
             </widget>
            </item>
            <item row="4" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Sample rate (Hz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Duration (sec)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Beginning freq. (Hz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
             <widget class="QLabel" name="label_6">
              <property name="text">
               <string>Bit depth</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Ending freq. (Hz)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="duration">
+             <property name="text">
+              <string>10</string>
+             </property>
+             <property name="placeholderText">
+              <string>in sec</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="beg_freq">
+             <property name="text">
+              <string>20</string>
+             </property>
+             <property name="placeholderText">
+              <string>in Hz</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
             <widget class="QComboBox" name="bitdepth">
              <property name="currentIndex">
               <number>1</number>
@@ -437,7 +427,33 @@ border: none;
              </item>
             </widget>
            </item>
-           <item row="5" column="1">
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="end_freq">
+             <property name="text">
+              <string>20000</string>
+             </property>
+             <property name="placeholderText">
+              <string>in Hz</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QCheckBox" name="fullspectrumbox">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Full frequency range</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
             <widget class="QCheckBox" name="fadebox">
              <property name="text">
               <string>Apply fades</string>
