@@ -315,32 +315,10 @@ border: none;
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,2,3">
+           <layout class="QVBoxLayout" name="verticalLayout_5" stretch="2,0,0,3">
             <property name="sizeConstraint">
              <enum>QLayout::SetMaximumSize</enum>
             </property>
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>65</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Please choose a sweep that goes from 20Hz to half of its sample rate. Otherwise, results may not be what you expect.</string>
-              </property>
-              <property name="scaledContents">
-               <bool>false</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
             <item>
              <widget class="QPushButton" name="browsesweep_button">
               <property name="minimumSize">
@@ -355,6 +333,68 @@ border: none;
               <property name="text">
                <string>Browse sweep file</string>
               </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="fullrangebox">
+              <property name="text">
+               <string>Full range sweep</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="freqwidget" native="true">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>60</height>
+               </size>
+              </property>
+              <widget class="QWidget" name="formLayoutWidget">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>181</width>
+                 <height>61</height>
+                </rect>
+               </property>
+               <layout class="QFormLayout" name="formLayout">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetMinimumSize</enum>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>Beginning frequency</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>Ending frequency</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="begfreq">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="endfreq"/>
+                </item>
+               </layout>
+              </widget>
              </widget>
             </item>
             <item>

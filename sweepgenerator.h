@@ -35,6 +35,10 @@ private slots:
 
     void on_play_button_clicked();
 
+    void on_srate_currentTextChanged(const QString &arg1);
+
+    void on_fullspectrumbox_stateChanged(int arg1);
+
 private:
     Ui::SweepGenerator *ui;
 };

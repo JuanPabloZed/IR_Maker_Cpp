@@ -94,6 +94,12 @@ private slots:
 
     void on_irlengthSamples_textChanged(const QString &arg1);
 
+    void on_fullrangebox_stateChanged(int arg1);
+
+    void on_begfreq_textChanged(const QString &arg1);
+
+    void on_endfreq_textChanged(const QString &arg1);
+
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *filemodel;

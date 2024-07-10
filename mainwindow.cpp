@@ -185,12 +185,16 @@ MainWindow::~MainWindow()
 void MainWindow::checkall(){
     if (ui->browsesweep_button->text() == "Browse sweep file"
         || ui->browsesweep_button->text() == ""
+        || ui->begfreq->text() == ""
+        || ui->endfreq->text() == ""
         || recordpath == ""
         || ui->srate->text()== "" || ui->srate->text() == "0")
     { ui->createir_button->setEnabled(false); }
 
     else if (ui->browsesweep_button->text() != "Browse sweep file"
          && ui->browsesweep_button->text() != ""
+         && ui->begfreq->text() != ""
+         && ui->endfreq->text() != ""
          && recordpath !=""
          && ui->srate->text()!= "" && ui->srate->text() != "0")
     {
@@ -474,7 +478,7 @@ int MainWindow::deconvolve(){
     std::vector<float> invess_temp(sweep.getNumSamplesPerChannel());
     double k;
     // double R = log((int)(sweep.getSampleRate()*0.5)/20.0); // change to values in ui
-    double R = log(20000.0/20.0); // change to values in ui
+    double R = log(ui->endfreq->text().toFloat()/ui->begfreq->text().toFloat()); // change to values in ui
     int i = 0;
     for (std::vector<double>::reverse_iterator riter = sweep.samples[0].rbegin();
          riter != sweep.samples[0].rend(); riter++)
@@ -809,25 +813,46 @@ void MainWindow::on_createir_button_clicked()
 
 
         // OUTPUT
-        const auto uuid = QUuid::createUuid();
-        auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
+        QFileInfo recinfo(recordpath);
+        if (selectedList.size()==1)
+        {
+            const auto uuid = QUuid::createUuid();
+            auto new_filename = QString("temp/") + uuid.toString(QUuid::WithoutBraces) + ".wav";
 
-        if (ui->autosave_radio->isChecked()){
-            QDir autosaveroot(recorddir);
-            QFileInfo recinfo(recordpath);
-            // create output folder if not already done
-            if (!QDir(recorddir + QString("/IR")).exists()){
-                autosaveroot.mkdir("IR");
+            if (ui->autosave_radio->isChecked()){
+                QDir autosaveroot(recorddir);
+
+                // create output folder if not already done
+                if (!QDir(recorddir + QString("/IR")).exists()){
+                    autosaveroot.mkdir("IR");
+                }
+                savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
+                out.save(savepathauto.toStdString());
+                QFile::copy(savepathauto, new_filename);
+            } else {
+                out.save(savepathcstm.toStdString());
+                QFile::copy(savepathcstm, new_filename);
             }
-            savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
-            out.save(savepathauto.toStdString());
-            QFile::copy(savepathauto, new_filename);
-        } else {
-            out.save(savepathcstm.toStdString());
-            QFile::copy(savepathcstm, new_filename);
-        }
 
-        outuuidurl = new_filename;
+            outuuidurl = new_filename;
+
+        } else {
+
+            if (ui->autosave_radio->isChecked()){
+                QDir autosaveroot(recorddir);
+                // create output folder if not already done
+                if (!QDir(recorddir + QString("/IR")).exists()){
+                    autosaveroot.mkdir("IR");
+                }
+                savepathauto = recorddir + QString("/IR/") + recinfo.baseName() + QString(" - IR.wav");
+                out.save(savepathauto.toStdString());
+            } else {
+                QString dircstm = savepathcstm;
+                savepathcstm = savepathcstm + QString("/") + recinfo.baseName() + QString(" - IR.wav");
+                out.save(savepathcstm.toStdString());
+                savepathcstm = dircstm;
+            }
+        }
     }
     //END FOR LOOP
 
@@ -1025,11 +1050,6 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->replot();
 
     }
-
-    } else {
-        ui->showgraphsbox->setChecked(false);
-    }
-
     // now that ir is created, it's possible to play it
     ui->playir_button->setEnabled(true);
     ui->testsound->setEnabled(true);
@@ -1045,8 +1065,7 @@ void MainWindow::on_createir_button_clicked()
         ui->testir->setEnabled(false);
         qDebug() << "non matching sample rates for testfile and IR";
         return;
-    }
-    else {
+    } else {
         this->convolvetest();
         // save test wet
         testwet.setSampleRate(out.getSampleRate());
@@ -1058,6 +1077,13 @@ void MainWindow::on_createir_button_clicked()
         testwet.save(new_filename.toStdString());
         ui->testir->setEnabled(true);
     }
+    } else {
+        ui->showgraphsbox->setChecked(false);
+        ui->playir_button->setEnabled(false);
+        ui->testir->setEnabled(false);
+        ui->testsound->setEnabled(false);
+    }
+
 }
 
 
@@ -1106,6 +1132,10 @@ void MainWindow::on_browsesweep_button_clicked()
     ui->browsesweep_button->setText(sweepname);
     lastSweepDir = sweepinfo.dir().absolutePath();
     sweep.load(sweeppath.toStdString());
+    if (ui->fullrangebox->isChecked()){
+        ui->begfreq->setText("20");
+        ui->endfreq->setText(QString::number(sweep.getSampleRate()/2));
+    }
     this->checkall();
 }
 
@@ -1135,17 +1165,25 @@ void MainWindow::on_browseout_button_clicked()
 {
     AudioFile<double> test;
 
-    savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", lastSaveDir, "WAV files (*.wav)");
+    if (ui->files_list->selectionModel()->selectedIndexes().size() == 1)
+    {
+        savepathcstm = QFileDialog::getSaveFileName(this, "Select saving location", lastSaveDir, "WAV files (*.wav)");
+    } else {
+        savepathcstm = QFileDialog::getExistingDirectory(this, "Select saving location (no need to specify file name)", lastSaveDir);
+    }
     QFileInfo customOutInfo(savepathcstm);
     QStringList list = savepathcstm.split("/");
     // change button text to file name
     if (savepathcstm == ""){
         ui->browseout_button->setText("Browse output");
+        return;
     } else {
         ui->browseout_button->setText(list[list.size()-1]);
         lastSaveDir = customOutInfo.dir().absolutePath();
-    }
-    bool loaded = test.load(savepathcstm.toStdString());
+        }
+
+    // bool loaded = test.load(savepathcstm.toStdString());
+
     this->checkall();
 }
 
@@ -1401,5 +1439,31 @@ void MainWindow::on_irlengthSamples_textChanged(const QString &arg1)
     if (ui->irlengthSamples->text().toFloat() != ui->irlengthSamples->text().toInt()){
         ui->irlengthSamples->setText(QString::number(ui->irlengthSamples->text().toInt()));
     }
+}
+
+
+void MainWindow::on_fullrangebox_stateChanged(int arg1)
+{
+    if (ui->fullrangebox->isChecked()){
+        ui->freqwidget->setEnabled(false);
+        if (ui->browsesweep_button->text() != "Browse sweep file"){
+            ui->begfreq->setText("20");
+            ui->endfreq->setText(QString::number(sweep.getSampleRate()/2));
+        }
+    } else {
+        ui->freqwidget->setEnabled(true);
+    }
+    this->checkall();
+}
+
+void MainWindow::on_begfreq_textChanged(const QString &arg1)
+{
+    this->checkall();
+}
+
+
+void MainWindow::on_endfreq_textChanged(const QString &arg1)
+{
+    this->checkall();
 }
 

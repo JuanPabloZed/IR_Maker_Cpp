@@ -185,3 +185,26 @@ void SweepGenerator::on_play_button_clicked()
 
 }
 
+
+void SweepGenerator::on_srate_currentTextChanged(const QString &text)
+{
+    if (ui->fullspectrumbox->isChecked()){
+        ui->beg_freq->setText("20");
+        ui->end_freq->setText(QString::number(text.toInt()/2));
+    }
+}
+
+
+void SweepGenerator::on_fullspectrumbox_stateChanged(int state)
+{
+    if (state){
+        ui->beg_freq->setEnabled(false);
+        ui->end_freq->setEnabled(false);
+        ui->beg_freq->setText("20");
+        ui->end_freq->setText(QString::number(ui->srate->currentText().toInt()/2));
+    } else {
+        ui->beg_freq->setEnabled(true);
+        ui->end_freq->setEnabled(true);
+    }
+}
+

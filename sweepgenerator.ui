@@ -397,6 +397,9 @@ border: none;
            </item>
            <item row="1" column="1">
             <widget class="QLineEdit" name="beg_freq">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>20</string>
              </property>
@@ -429,8 +432,11 @@ border: none;
            </item>
            <item row="2" column="1">
             <widget class="QLineEdit" name="end_freq">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
-              <string>20000</string>
+              <string>24000</string>
              </property>
              <property name="placeholderText">
               <string>in Hz</string>
@@ -440,7 +446,7 @@ border: none;
            <item row="0" column="0">
             <widget class="QCheckBox" name="fullspectrumbox">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="minimumSize">
               <size>
@@ -450,6 +456,12 @@ border: none;
              </property>
              <property name="text">
               <string>Full frequency range</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
