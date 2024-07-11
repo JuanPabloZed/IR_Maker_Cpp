@@ -34,7 +34,7 @@ This application is based on the use of Angelo Farina's ESS method. To sum up, t
   - Waveform visualisation
 
 ## ADVICE TO MAKE THE CLEANEST IRS
-- Use a sweep that goes up to your **Nyquist frequency**, *i.e.* half of the sample rate, instead of stopping at 20kHz (use the **"full range"** boxes to do it for you !)
+- Use a sweep that goes up to your **Nyquist frequency**, *i.e.* half of the sample rate, instead of stopping at 20kHz (use the **"full frequency range"** boxes to do it for you !)
 - Use the **same sample rate** for both the sweep *AND* the response
 - Use the **same bit depth** for both the sweep *AND* the response
 - For a cab IR, use a **mono file** for the response
