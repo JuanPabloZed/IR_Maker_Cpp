@@ -338,7 +338,7 @@ border: none;
             <item>
              <widget class="QCheckBox" name="fullrangebox">
               <property name="text">
-               <string>Full range sweep</string>
+               <string>Full frequency range sweep</string>
               </property>
               <property name="checked">
                <bool>true</bool>
