@@ -11,7 +11,6 @@ SweepGenerator::SweepGenerator(QWidget *parent)
 {
     ui->setupUi(this);
     this->setModal(false);
-    ui->spectro_plot->setVisible(false);
 
     QRgb labelrgb = QRgb(0x8bc34a);
     QPen gridpen;

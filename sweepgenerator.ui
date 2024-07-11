@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>563</width>
-    <height>571</height>
+    <height>444</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -611,18 +611,19 @@ border: none;
     </widget>
    </item>
    <item>
-    <widget class="QSplitter" name="splitter">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QCustomPlot" name="sweep_plot">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>160</height>
+      </size>
      </property>
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
      </property>
-     <widget class="QCustomPlot" name="sweep_plot"/>
-     <widget class="QCustomPlot" name="spectro_plot"/>
     </widget>
    </item>
   </layout>
