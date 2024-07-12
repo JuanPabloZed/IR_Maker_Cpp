@@ -197,6 +197,10 @@ background: #454545;
 border-radius: 2px;
 }
 
+QListView::item:selected{
+background: #3a541c
+}
+
 QGraphicsView{
 background: #252525;
 border: none;
@@ -361,8 +365,8 @@ border: none;
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>181</width>
-                 <height>61</height>
+                 <width>203</width>
+                 <height>65</height>
                 </rect>
                </property>
                <layout class="QFormLayout" name="formLayout">
@@ -385,6 +389,12 @@ border: none;
                 </item>
                 <item row="0" column="1">
                  <widget class="QLineEdit" name="begfreq">
+                  <property name="maximumSize">
+                   <size>
+                    <width>65</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>20</string>
                   </property>
@@ -392,6 +402,12 @@ border: none;
                 </item>
                 <item row="1" column="1">
                  <widget class="QLineEdit" name="endfreq">
+                  <property name="maximumSize">
+                   <size>
+                    <width>65</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>24000</string>
                   </property>
