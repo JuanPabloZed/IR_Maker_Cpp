@@ -25,7 +25,7 @@ This application is based on the use of Angelo Farina's ESS method. To sum up, t
 - 16, 24, 32 bit PCM output options
 - Visual tools for a direct analysis of the IRs (waveform, spectrum, hidable if wanted)
 - Hear the IRs directly or through an audio file of your choice (if longer than 10sec, will be truncated at 10sec)
-- Multiple IRs rendering at once (batch rendering)
+- Multiple IRs rendering at once (batch rendering) : simply select the files you want to process 
 
 **- SWEEP GENERATOR**
   - Customable beginning & ending frequencies (possible to make a decreasing sweep e.g. for a bass drop, but for IR making it *HAS* to be **increasing**)
