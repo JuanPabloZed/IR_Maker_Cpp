@@ -19,6 +19,7 @@ This application is based on the use of Angelo Farina's ESS method. To sum up, t
  **Important note** : the software only supports 16, 24 & 32 bit **PCM** WAV files.
 
 ## IR MAKER FEATURES
+*To get all the features, be sure to run the app as administrator if you're not logged in with an administrator session*
 - Automatic output saving for fast workflow **AND** custom saving option
 - Custom the IR's length, in ms or samples
 - Pre-ringing cut option (can be disabled if you want to experiment and get the full raw output)
