@@ -1091,6 +1091,7 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->clearGraphs();
         ui->freq_plot->clearGraphs();
     }
+    QMessageBox::information(this, "Processing done", "Done !");
 
 }
 
