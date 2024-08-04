@@ -556,12 +556,12 @@ int MainWindow::deconvolve(){
         // get output spectrum
         float *temp = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
         pffft_zreorder(fftsetup, out_freqbuffer, temp, PFFFT_FORWARD);
-        std::vector<float> outtemp;
-        for (int i = 0; i < fftsize; i++){
-            outtemp.push_back(temp[i]);
-        }
+        // std::vector<float> outtemp;
+        // for (int i = 0; i < fftsize; i++){
+        //     outtemp.push_back(temp[i]);
+        // }
 
-        out_spectrum.push_back(outtemp);
+        // out_spectrum.push_back(outtemp);
         //- backwards fft
         // use rec buffers since they won't be used anymore and are the right size
         pffft_transform(fftsetup, out_freqbuffer, rec_timebuffer, work, PFFFT_BACKWARD);
@@ -665,6 +665,13 @@ int MainWindow::deconvolve(){
         if (ui->irlengthbox->isChecked()){
             if (ui->irlength->text() == ""){
                 QMessageBox::critical(this, "No IR length provided", "Please specify the desired length of your IR, or uncheck the \"Custom IR Length\" option.");
+            }
+            else if (ui->irlengthSamples->text().toInt() > out.getNumSamplesPerChannel()){
+                QMessageBox::critical(this, "Custom length longer than file length",
+                                      "The wanted length of the IR is greater than the actual length of the file, "
+                                      "which is " + QString::number(out.getNumSamplesPerChannel()) + "samples. "
+                                      "Please specify a length that is smaller than "
+                                      + QString::number(out.getNumSamplesPerChannel()) + "samples. ");
             } else {
                 int length = ui->irlengthSamples->text().toInt();
                 for (int chan=0; chan < recording.getNumChannels(); chan++){
@@ -673,7 +680,63 @@ int MainWindow::deconvolve(){
             }
         }
     }
-    return fftsize;
+    //- get actual spectrum for IR (take trim into account)
+    // new fft transform so new fft size + new setup
+    int irfftsize = 1 << (int)(log2(out.getNumSamplesPerChannel() - 1) + 1);
+    PFFFT_Setup *irsetup = pffft_new_setup(irfftsize, PFFFT_REAL);
+    // necessary buffers
+    float *ir_timebuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+    float *ir_freqbuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+    float *ir_tempbuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+    // mono IR
+    if (out.isMono()){
+    // fill the time buffer
+    for (int i = 0; i<irfftsize; i++){
+        if (i<out.getNumSamplesPerChannel()){
+            ir_timebuffer[i] = out.samples[0][i];
+        } else {
+            ir_timebuffer[i] = 0;
+        }
+    }
+    // fft transform + reorder for easier processing
+    pffft_transform(irsetup, ir_timebuffer, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
+    pffft_zreorder(irsetup, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
+    // prepare spectrum to be sent in out_spectrum
+    std::vector<float> irfreq;
+    for (int i = 0; i < irfftsize; i++){
+        irfreq.push_back(ir_freqbuffer[i]);
+    }
+    out_spectrum.push_back(irfreq);
+    }
+    // stereo IR
+    else if (out.isStereo()){
+        for (int chan = 0; chan < 2; chan++){
+            // fill the time buffer
+            for (int i = 0; i<irfftsize; i++){
+                if (i <= out.getNumSamplesPerChannel()){
+                    ir_timebuffer[i] = out.samples[chan][i];
+                } else {
+                    ir_timebuffer[i] = 0;
+                }
+            }
+            // fft transform + reorder for easier processing
+            pffft_transform(irsetup, ir_timebuffer, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
+            pffft_zreorder(irsetup, ir_freqbuffer, ir_tempbuffer, PFFFT_FORWARD);
+            // prepare spectrum to be sent in out_spectrum
+            std::vector<float> irfreq;
+            for (int i = 0; i < irfftsize; i++){
+                irfreq.push_back(ir_freqbuffer[i]);
+            }
+            out_spectrum.push_back(irfreq);
+        }
+    }
+    // destroy fft variables
+    pffft_destroy_setup(irsetup);
+    pffft_aligned_free(ir_timebuffer);
+    pffft_aligned_free(ir_freqbuffer);
+    pffft_aligned_free(ir_tempbuffer);
+
+    return irfftsize;
 }
 
 void MainWindow::limXZoomIR(QCPRange range){
@@ -860,8 +923,9 @@ void MainWindow::on_createir_button_clicked()
             }
         }
     }
-    //END FOR LOOP
-
+    if (!(ui->showgraphsbox->isChecked())){
+        QMessageBox::information(this, "Processing done", "Done !");
+    }
     // PLOTTING (no plot if batch rendering)
     if (selectedList.size()==1)
     {
@@ -912,9 +976,6 @@ void MainWindow::on_createir_button_clicked()
         }
         ui->freq_plot->addGraph()->setData(xfreq, yfreq);
         ui->freq_plot->graph(0)->rescaleAxes();
-        // ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-        // ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
-        // ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->freq_plot->xAxis->setRange(20, 22000);
         ui->freq_plot->yAxis->setRange(0,-120);
         ui->freq_plot->graph(0)->setPen(graphsPen);
@@ -975,7 +1036,6 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->addGraph()->setData(x,yL);
         ui->ir_plot->addGraph()->setData(x,yR);
         ui->ir_plot->rescaleAxes();
-        // ui->ir_plot->xAxis->setRange(0, out.getNumSamplesPerChannel() / out.getSampleRate());
         ui->ir_plot->yAxis->setRange(-1.1, 3.2);
         ui->ir_plot->axisRect()->setRangeZoom(Qt::Horizontal);
         ui->ir_plot->axisRect()->setRangeDrag(Qt::Horizontal);
@@ -997,9 +1057,6 @@ void MainWindow::on_createir_button_clicked()
         ui->freq_plot->addGraph()->setData(xfreq, yfreqRsmooth);
         ui->freq_plot->xAxis->setRange(20,22000);
         ui->freq_plot->yAxis->setRange(0,-100);
-        // ui->freq_plot->axisRect()->setRangeZoom(Qt::Horizontal);
-        // ui->freq_plot->axisRect()->setRangeDrag(Qt::Horizontal);
-        // ui->freq_plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         ui->freq_plot->graph(0)->setPen(freqPenL);
         ui->freq_plot->graph(1)->setPen(freqPenR);
 
@@ -1091,15 +1148,13 @@ void MainWindow::on_createir_button_clicked()
         ui->ir_plot->clearGraphs();
         ui->freq_plot->clearGraphs();
     }
-    QMessageBox::information(this, "Processing done", "Done !");
-
 }
 
 
 void MainWindow::on_browsesweep_button_clicked()
 {
     // get path of sweep
-    sweeppath = QFileDialog::getOpenFileName(this, "Select the sweep file used for rercording the response", lastSweepDir,"WAV files (*.wav)");
+    sweeppath = QFileDialog::getOpenFileName(this, "Select the sweep file used for recording the response", lastSweepDir,"WAV files (*.wav)");
     if (sweeppath == ""){
         this->checkall();
         return;
