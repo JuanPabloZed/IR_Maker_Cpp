@@ -260,7 +260,7 @@ border: none;
     </rect>
    </property>
    <property name="text">
-    <string>Copyright (c) 2024 Nathan Zwahlen, Benjamin Quiédeville</string>
+    <string>Copyright (c) 2024 Nathan Zwahlen</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>

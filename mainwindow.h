@@ -100,6 +100,8 @@ private slots:
 
     void on_endfreq_textChanged(const QString &arg1);
 
+    void on_CutTailBox_stateChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *filemodel;

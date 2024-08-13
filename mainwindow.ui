@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1088</width>
+    <width>1060</width>
     <height>747</height>
    </rect>
   </property>
@@ -512,6 +512,9 @@ border: none;
           <string>OUTPUT</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="spacing">
+           <number>4</number>
+          </property>
           <item>
            <widget class="QRadioButton" name="autosave_radio">
             <property name="minimumSize">
@@ -786,6 +789,16 @@ folder in recordings folder)</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="CutTailBox">
+            <property name="text">
+             <string>Auto cut tail</string>
             </property>
             <property name="checked">
              <bool>true</bool>

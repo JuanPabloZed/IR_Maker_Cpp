@@ -609,14 +609,16 @@ int MainWindow::deconvolve(){
     double thresh = 0.0005;
     int cutlength = out.samples[0].size();
     bool threshhit = false;
-    while (!threshhit){
-        if (std::abs(out.samples[0][cutlength]) > thresh){
-            threshhit = true;
-        } else {
-            cutlength--;
+    if (ui->CutTailBox->isChecked()){
+        while (!threshhit){
+            if (std::abs(out.samples[0][cutlength]) > thresh){
+                threshhit = true;
+            } else {
+                cutlength--;
+            }
         }
+        out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
     }
-    out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
     //- trim left side
     if (ui->trimbox->isChecked()){
         // trim convolution delay
@@ -637,17 +639,17 @@ int MainWindow::deconvolve(){
             }
             out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
             // also trim right side because cab IRs have to be short
-            thresh = 0.0005;
-            cutlength = out.samples[0].size();
-            threshhit = false;
-            while (!threshhit){
-                if (std::abs(out.samples[0][cutlength]) > thresh){
-                    threshhit = true;
-                } else {
-                    cutlength--;
-                }
-            }
-            out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
+            // thresh = 0.0005;
+            // cutlength = out.samples[0].size();
+            // threshhit = false;
+            // while (!threshhit){
+            //     if (std::abs(out.samples[0][cutlength]) > thresh){
+            //         threshhit = true;
+            //     } else {
+            //         cutlength--;
+            //     }
+            // }
+            // out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
 
         } else if (out.isStereo()){
             while (!threshhit){
@@ -1310,17 +1312,6 @@ void MainWindow::on_autosave_radio_toggled(bool checked)
 
 void MainWindow::on_srate_textChanged(const QString &arg1)
 {
-    if (ui->srate->text() != "" && ui->srate->text() != "0"){
-        ui->irlengthbox->setEnabled(true);
-        if (ui->irlengthbox->isChecked()){
-            ui->irlength->setEnabled(true);
-            ui->irlengthSamples->setEnabled(true);
-        }
-    } else {
-        ui->irlengthbox->setEnabled(false);
-        ui->irlength->setEnabled(false);
-        ui->irlengthSamples->setEnabled(false);
-    }
     this->checkall();
 }
 
@@ -1359,13 +1350,13 @@ void MainWindow::on_irlengthbox_stateChanged(int state)
 
 void MainWindow::on_trimbox_stateChanged(int state)
 {
-    if (state == Qt::Unchecked){
-        ui->irlengthbox->setChecked(false);
-        ui->irlengthbox->setEnabled(false);
-        ui->irlength->setEnabled(false);
-    } else {
+    if (ui->trimbox->isChecked() && (!ui->CutTailBox->isChecked())){
         ui->irlengthbox->setEnabled(true);
+    } else {
+        ui->irlengthbox->setEnabled(false);
+        ui->irlengthbox->setChecked(false);
     }
+    this->checkall();
 }
 
 
@@ -1534,6 +1525,20 @@ void MainWindow::on_begfreq_textChanged(const QString &arg1)
 
 void MainWindow::on_endfreq_textChanged(const QString &arg1)
 {
+    this->checkall();
+}
+
+
+void MainWindow::on_CutTailBox_stateChanged(int state)
+{
+    if (ui->trimbox->isChecked() && (!ui->CutTailBox->isChecked())){
+        ui->irlengthbox->setEnabled(true);
+    } else {
+        ui->irlengthbox->setEnabled(false);
+        ui->irlengthbox->setChecked(false);
+
+    }
+
     this->checkall();
 }
 
