@@ -224,7 +224,6 @@ void MainWindow::convolvetest(){
     // CASES FOR IR FORMAT
     // Mono IR
     if (out.isMono()){
-        qDebug() << "ir is mono";
         // prepare wet test file
         testwet.setNumChannels(testfile.getNumChannels());
         // create buffers + work buffer
@@ -285,7 +284,6 @@ void MainWindow::convolvetest(){
     }
     // STEREO IR
     else if (out.isStereo()){
-        qDebug() << "ir is stereo";
         testwet.setNumChannels(2);
         float *work = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
         // pre-process ir file
@@ -671,9 +669,10 @@ int MainWindow::deconvolve(){
             else if (ui->irlengthSamples->text().toInt() > out.getNumSamplesPerChannel()){
                 QMessageBox::critical(this, "Custom length longer than file length",
                                       "The wanted length of the IR is greater than the actual length of the file, "
-                                      "which is " + QString::number(out.getNumSamplesPerChannel()) + "samples. "
+                                      "which is " + QString::number(out.getNumSamplesPerChannel()) + " samples. "
                                       "Please specify a length that is smaller than "
-                                      + QString::number(out.getNumSamplesPerChannel()) + "samples. ");
+                                      + QString::number(out.getNumSamplesPerChannel()) + " samples. "
+                                      "Keeping the file's original length.") ;
             } else {
                 int length = ui->irlengthSamples->text().toInt();
                 for (int chan=0; chan < recording.getNumChannels(); chan++){
@@ -807,8 +806,8 @@ void MainWindow::on_createir_button_clicked()
 {
     // temporarily disable test ir button to show that it's computing
     ui->testir->setEnabled(false);
-    // remove previous temporary output file
 
+    // remove previous temporary output file
     QFile tempoutfile(outuuidurl);
 
     if (tempoutfile.exists()){
@@ -835,13 +834,19 @@ void MainWindow::on_createir_button_clicked()
     int fftsize = 1;
     for (int index = 0; index < selectedList.size(); index++)
     {
-        // SELECT RECORDING FILE IN SELECTED LIST
+        // clear output spectrum
+        if (out_spectrum.size() != 0){
+            for (int i=0; i <= out_spectrum.size(); i++){
+                out_spectrum.erase(out_spectrum.begin());
+            }
+        }
+        // SELECT RECORDING FILES IN SELECTED LIST
         recordpath  = filemodel->filePath(selectedList[index]);
         // check if special characters in file name
         bool recloaded = recording.load(recordpath.toStdString());
         if (!recloaded){
             QMessageBox::critical(this,"File name with special characters","Selected file(s) or element(s) in its path contain special characters (accents, punctuation...) that cannot be read. "
-                                                                             "Either rename the file or the problematic element(s) in its path, or select another file.");
+                                                                             "Either rename the file or the problematic element(s) in its path with ASCII characters, or select another file.");
             this->checkall();
             return;
         }
@@ -881,7 +886,6 @@ void MainWindow::on_createir_button_clicked()
         }
 
         // fill the output file with buffer data
-
 
         // OUTPUT
         QFileInfo recinfo(recordpath);
@@ -925,9 +929,13 @@ void MainWindow::on_createir_button_clicked()
             }
         }
     }
+
+    if (selectedList.size()>1 && ui->showgraphsbox->isChecked()){ui->showgraphsbox->setChecked(false);}
+
     if (!(ui->showgraphsbox->isChecked())){
         QMessageBox::information(this, "Processing done", "Done !");
     }
+
     // PLOTTING (no plot if batch rendering)
     if (selectedList.size()==1)
     {
@@ -984,7 +992,7 @@ void MainWindow::on_createir_button_clicked()
 
         ui->freq_plot->replot();
         // reset the spectrum container for next deconvolutions
-        out_spectrum.erase(out_spectrum.begin());
+        // out_spectrum.erase(out_spectrum.begin());
     }
     // STEREO OUTOPUT
     else if (out.isStereo()){
@@ -1009,7 +1017,6 @@ void MainWindow::on_createir_button_clicked()
         }
         yfreqLsmooth = smooth(yfreqL, 150);
         yfreqRsmooth = smooth(yfreqR, 150);
-
         // graph
         ui->ir_plot->clearGraphs();
         ui->freq_plot->clearGraphs();
@@ -1064,8 +1071,8 @@ void MainWindow::on_createir_button_clicked()
 
         ui->freq_plot->replot();
         // reset the spectrum container for next deconvolutions
-        out_spectrum.erase(out_spectrum.begin());
-        out_spectrum.erase(out_spectrum.begin());
+        // out_spectrum.erase(out_spectrum.begin());
+        // out_spectrum.erase(out_spectrum.begin());
 
     } else { // MULTICHANNEL OUTPUT
         ui->ir_plot->clearGraphs();
@@ -1123,12 +1130,11 @@ void MainWindow::on_createir_button_clicked()
     if (testfile.getNumChannels() > 2 && out.getNumChannels() <= 2){
         ui->testsound->setText("Browse test file");
         ui->testir->setEnabled(false);
-        qDebug() << "multi testfile for non multi IR";
+        QMessageBox::critical(this, "Multichannel test file for non_multichannel IR", "The selected file is multichannel, which cannot be used to test a non-multichannel IR. Please select a non-multichannel (i.e. mono or stereo) test file.");
         return;
-    } else if (testfile.getSampleRate() != out.getSampleRate()){
+    } else if (testfile.getLengthInSeconds() != 0 && testfile.getSampleRate() != out.getSampleRate()){
         ui->testsound->setText("Browse test file");
         ui->testir->setEnabled(false);
-        qDebug() << "non matching sample rates for testfile and IR";
         return;
     } else {
         this->convolvetest();
@@ -1141,7 +1147,7 @@ void MainWindow::on_createir_button_clicked()
 
         testwet.save(new_filename.toStdString());
         ui->testir->setEnabled(true);
-    }
+        }
     } else {
         ui->showgraphsbox->setChecked(false);
         ui->playir_button->setEnabled(false);
@@ -1446,7 +1452,6 @@ void MainWindow::on_testsound_clicked()
     // convolution
     if (testfile.getLengthInSeconds() > 10){
         testfile.setNumSamplesPerChannel(10*testfile.getSampleRate());
-        qDebug() << "cropped testfile to 10secs length";
     }
     this->convolvetest();
     // save test wet

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(IR_Maker VERSION 0.1 LANGUAGES CXX C)
+project(IR_Maker VERSION 1.0.3 LANGUAGES CXX C)
 
 set(VERBOSE 1)
 
