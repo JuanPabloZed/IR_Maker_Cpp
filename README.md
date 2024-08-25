@@ -4,6 +4,8 @@ Does the same thing as Voxengo's Deconvolver (https://www.voxengo.com/product/de
 
 Contact : nathan.zwahlen70@gmail.com
 
+## TO INSTALL A NEWER VERSION
+Go to the IR Maker folder, and run the unins0000.exe to uninstall previous version. Then, get the latest release on this github and run it !
 
 ## HOW TO MAKE AN IR
 This application is based on the use of Angelo Farina's ESS method. To sum up, the ESS method consists in the following : 
