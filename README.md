@@ -24,23 +24,23 @@ This application is based on the use of Angelo Farina's ESS method. To sum up, t
 *To get all the features, be sure to run the app as administrator if you're not logged in with an administrator session*
 - Automatic output saving for fast workflow **AND** custom saving option
 - Custom the IR's length, in ms or samples
-- Pre-ringing cut option (can be disabled if you want to experiment and get the full raw output)
+- Pre-ringing and tail cut option (can be disabled if you want to experiment and get the full raw output)
 - 16, 24, 32 bit PCM output options
-- Visual tools for a direct analysis of the IRs (waveform, spectrum, hidable if wanted)
-- Hear the IRs directly or through an audio file of your choice (if longer than 10sec, will be truncated at 10sec)
-- Multiple IRs rendering at once (batch rendering) : simply select the files you want to process 
+- Multiple IRs rendering at once (batch rendering) : simply select the files you want to process and generate all IRs at once
+- Visual tools for a direct analysis of the IRs (waveform, spectrum, hidable if wanted, not available with batch rendering)
+- Hear the raw IRs or test it through an audio file of your choice (if longer than 10sec, will be truncated at 10sec)
 
 **- SWEEP GENERATOR**
-  - Customable beginning & ending frequencies (possible to make a decreasing sweep e.g. for a bass drop, but for IR making it *HAS* to be **increasing**)
+  - Custom beginning & ending frequencies (possible to make a decreasing sweep e.g. for a bass drop, but for IR making it *HAS* to be **increasing**)
   - Fade-in/fade-out option
   - Sample rates from 44,1kHz to 192kHz
   - Waveform visualisation
 
 ## ADVICE TO MAKE THE CLEANEST IRS
-- Use a sweep that goes up to your **Nyquist frequency**, *i.e.* half of the sample rate, instead of stopping at 20kHz (use the **"full frequency range"** boxes to do it for you !)
 - Use the **same sample rate** for both the sweep *AND* the response
+- Use a sweep that goes up to your **Nyquist frequency** (half of the sample rate) or your recorded file instead of stopping at 20kHz (use the **"full frequency range"** boxes to do it for you !)
 - Use the **same bit depth** for both the sweep *AND* the response
-- For a cab IR, use a **mono file** for the response
+- For a cab IR, use a **mono file** for the recorded file
 
 ## How to get IR Maker
 Just get the latest release (Windows only for now) ! For now it might still be buggy so feel free to report any error/problem/bug, but it is proven to do its main job : make accurate IRs.
