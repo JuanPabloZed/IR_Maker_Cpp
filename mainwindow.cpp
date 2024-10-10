@@ -4,8 +4,11 @@
 #include "sweepgenerator.h"
 
 #include "AudioFile.h"
-#include "pffft.h"
 
+extern "C"{
+#include "pffft.h"
+#include "pffft.c"
+}
 #include <qcustomplot.h>
 #include <QPushButton>
 #include <QFileDialog>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Debug\CMakeFiles\e87a8eec99026d393e763aa52ce34fab\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{3382C1F2-C279-3F32-ADF8-BAB93CCA8B1C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

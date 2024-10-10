@@ -1,0 +1,10 @@
+^C:\_PROG\C++\QTAPPS\IR_MAKER\IRMAKER_MSVC\BUILD\RELEASE\CMAKEFILES\5F7258D77FF3631AC1E6EAEADAA1B75A\GENERATE.STAMP.RULE
+setlocal
+C:\_PROG\C++\_CMAKE\bin\cmake.exe -SC:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc -BC:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc/build/Release --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc/build/Release/IR_Maker.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

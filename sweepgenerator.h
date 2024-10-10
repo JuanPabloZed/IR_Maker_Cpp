@@ -3,7 +3,7 @@
 
 #include <QDialog>
 #include "AudioFile.h"
-#include <qcustomplot.h>
+#include "qcustomplot.h"
 #include <QSoundEffect>
 
 namespace Ui {

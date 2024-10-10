@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\mainwindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\about.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\sweepgenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\qcustomplot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\EWIEGA46WW\qrc_add.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\about.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\sweepgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\qcustomplot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_Debug\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_Debug\ui_about.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_Debug\ui_sweepgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_Release\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_Release\ui_about.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_Release\ui_sweepgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_MinSizeRel\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_MinSizeRel\ui_about.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_MinSizeRel\ui_sweepgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_RelWithDebInfo\ui_mainwindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_RelWithDebInfo\ui_about.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\include_RelWithDebInfo\ui_sweepgenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\CMakeFiles\b6c506a68a1149ad9fa86b113517e0a4\autouic_(CONFIG).stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\CMakeFiles\1c099905dc92aceda62ddbeab213186b\qrc_add.cpp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\mainwindow.ui" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\about.ui" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\add.qrc" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\sweepgenerator.ui" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\autouic_Debug.stamp" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\autouic_Release.stamp" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\autouic_MinSizeRel.stamp" />
+    <None Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\build\Release\IR_Maker_autogen\autouic_RelWithDebInfo.stamp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="C:\_PROG\C++\QtApps\IR_Maker\IRMaker_msvc\icon.o">
+      <Filter>Object Files</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{1B6713F7-AD53-39E6-8A38-6F15EB4B530E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{ACA961FC-1576-3CD4-BC54-18456ACE2741}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Files">
+      <UniqueIdentifier>{055FCE57-997A-347E-BD5B-7A06BD8FB6CD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{CD4FE309-8B64-3B09-8DCF-E0A7BBB90BF4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

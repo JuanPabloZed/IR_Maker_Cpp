@@ -22,20 +22,21 @@ set(PROJECT_SOURCES
         mainwindow.h
         mainwindow.ui
 )
+add_compile_options(/Zc:__cplusplus
+                    /permissive-
+                    /MP5
+                    )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(IR_Maker
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        pffft.c pffft.h
+        # pffft.c
         about.h about.cpp about.ui
         add.qrc
         sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
         qcustomplot.cpp qcustomplot.h
         icon.o
-        AudioFile.h
-
-
     )
 # img/irmaker.ico
 # img/branch-closed2.png img/branch-open2.png
@@ -61,6 +62,8 @@ set_target_properties(IR_Maker PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+set(EXECUTABLE_OUTPUT_PATH "../../bin")
 
 include(GNUInstallDirs)
 install(TARGETS IR_Maker
