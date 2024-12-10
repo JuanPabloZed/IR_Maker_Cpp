@@ -1,3 +1,4 @@
+#include "qcustomplot.h"
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "about.h"
@@ -9,7 +10,6 @@ extern "C"{
 #include "pffft.h"
 #include "pffft.c"
 }
-#include <qcustomplot.h>
 #include <QPushButton>
 #include <QFileDialog>
 // #include <QDebug>
@@ -1437,7 +1437,7 @@ void MainWindow::on_testsound_clicked()
     if (testfile.getNumSamplesPerChannel() > 60 * out.getSampleRate()){
         // user can continue to proceed with buttons
         QMessageBox::StandardButton reply;
-        reply = QMessageBox::warning(this, "Long test file", "Selected test file is more than a minute long, the longer your test file is, the longer it takes to compute it. Proceed anyways ?", QMessageBox::Yes|QMessageBox::No);
+        reply = QMessageBox::warning(this, "Long test file", "Selected test file is more than a minute long. The longer your test file is, the longer it takes to compute it. Proceed anyways ?", QMessageBox::Yes|QMessageBox::No);
         if (reply == QMessageBox::No){
             ui->testsound->setText("Browse test sound");
             return;

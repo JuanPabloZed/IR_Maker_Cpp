@@ -35,7 +35,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         about.h about.cpp about.ui
         add.qrc
         sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
-        qcustomplot.cpp qcustomplot.h
+        qcustomplot.cpp
         icon.o
     )
 # img/irmaker.ico

@@ -35,4 +35,8 @@ License.txt
 
 # build folder
 build*
+bin*
 .vscode
+
+# CMakeLists.user files
+CMakeLists.txt.user*
