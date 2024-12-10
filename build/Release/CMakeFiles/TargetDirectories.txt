@@ -1,4 +1,0 @@
-C:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc/build/Release/CMakeFiles/IR_Maker.dir
-C:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc/build/Release/CMakeFiles/INSTALL.dir
-C:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc/build/Release/CMakeFiles/ALL_BUILD.dir
-C:/_PROG/C++/QtApps/IR_Maker/IRMaker_msvc/build/Release/CMakeFiles/ZERO_CHECK.dir
