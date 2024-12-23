@@ -10,6 +10,7 @@ extern "C"{
 #include "pffft.h"
 #include "pffft.c"
 }
+
 #include <QPushButton>
 #include <QFileDialog>
 // #include <QDebug>
@@ -212,7 +213,6 @@ void MainWindow::checkall(){
 }
 
 void MainWindow::convolvetest(){
-
 
     // prepare fft
     int testSize = testfile.getNumSamplesPerChannel();
@@ -466,7 +466,6 @@ void MainWindow::convolvetest(){
             testwet.samples[channel][i] /= absmax;
         }
     }
-    // trimming ?
 
 }
 

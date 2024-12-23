@@ -260,10 +260,11 @@ border: none;
     </rect>
    </property>
    <property name="text">
-    <string>Copyright (c) 2024 Nathan Zwahlen</string>
+    <string>Copyright (c) 2024 Nathan Zwahlen 
+ &amp; Benjamin Quiedeville</string>
    </property>
    <property name="alignment">
-    <set>Qt::AlignCenter</set>
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
   </widget>
   <widget class="QLabel" name="label">
@@ -279,7 +280,7 @@ border: none;
     <string>v1.0.3</string>
    </property>
    <property name="alignment">
-    <set>Qt::AlignCenter</set>
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -295,7 +296,7 @@ border: none;
     <string>IR Maker</string>
    </property>
    <property name="alignment">
-    <set>Qt::AlignCenter</set>
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
   </widget>
   <widget class="QLabel" name="label_4">
@@ -503,7 +504,7 @@ border: none;
     <string notr="true">https://github.com/JuanPabloZed/IR_Maker_Cpp</string>
    </property>
    <property name="textFormat">
-    <enum>Qt::MarkdownText</enum>
+    <enum>Qt::TextFormat::MarkdownText</enum>
    </property>
    <property name="openExternalLinks">
     <bool>true</bool>

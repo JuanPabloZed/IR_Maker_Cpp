@@ -37,6 +37,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
         qcustomplot.cpp
         icon.o
+        pocketfft/ffttest.c pocketfft/pocketfft.c pocketfft/pocketfft.h
+
     )
 # img/irmaker.ico
 # img/branch-closed2.png img/branch-open2.png
