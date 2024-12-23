@@ -482,7 +482,7 @@ int MainWindow::deconvolve(){
     double R = log(ui->endfreq->text().toFloat()/ui->begfreq->text().toFloat()); // change to values in ui
     int i = 0;
     for (std::vector<double>::reverse_iterator riter = sweep.samples[0].rbegin();
-         riter != sweep.samples[0].rend(); riter++)
+        riter != sweep.samples[0].rend(); riter++)
     {
         k = exp((((float) i/sweep.getSampleRate()) * R ) / (sweep.getNumSamplesPerChannel()/(float) sweep.getSampleRate()));
         invess_temp[i] = *riter / k;
@@ -553,10 +553,10 @@ int MainWindow::deconvolve(){
         //- forward fft
         pffft_transform(fftsetup, (const float *)rec_timebuffer, rec_freqbuffer, work, PFFFT_FORWARD);
         //- convolution
-        pffft_zconvolve_accumulate(fftsetup, rec_freqbuffer, invess_freqbuffer, out_freqbuffer, 1.0); // manually scale after operation
+        pffft_zconvolve_accumulate(fftsetup, invess_freqbuffer, rec_freqbuffer, out_freqbuffer, 1.0); // manually scale after operation
         // get output spectrum
         float *temp = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        pffft_zreorder(fftsetup, out_freqbuffer, temp, PFFFT_FORWARD);
+        // pffft_zreorder(fftsetup, out_freqbuffer, temp, PFFFT_FORWARD);
         // std::vector<float> outtemp;
         // for (int i = 0; i < fftsize; i++){
         //     outtemp.push_back(temp[i]);
@@ -608,7 +608,7 @@ int MainWindow::deconvolve(){
     // trim right side for cab IRs
     // also trim right side because cab IRs have to be short
     double thresh = 0.0005;
-    int cutlength = out.samples[0].size();
+    int cutlength = out.getNumSamplesPerChannel()-1;
     bool threshhit = false;
     if (ui->CutTailBox->isChecked()){
         while (!threshhit){
@@ -618,7 +618,7 @@ int MainWindow::deconvolve(){
                 cutlength--;
             }
         }
-        out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
+        out.samples[0].erase(std::next(out.samples[0].begin(), cutlength+1), out.samples[0].end());
     }
     //- trim left side
     if (ui->trimbox->isChecked()){
@@ -654,12 +654,13 @@ int MainWindow::deconvolve(){
 
         } else if (out.isStereo()){
             while (!threshhit){
-                if (std::abs(out.samples[0][cutlength]) > thresh || out.samples[1][cutlength] > thresh){
+                if ((std::abs(out.samples[0][cutlength]) > thresh || std::abs(out.samples[1][cutlength]) > thresh) && cutlength < out.getNumSamplesPerChannel()){
                     threshhit = true;
                 } else {
                     cutlength++;
                 }
             }
+
             out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
             out.samples[1].erase(out.samples[1].begin(), std::next(out.samples[1].begin(), cutlength));
         }
@@ -717,7 +718,7 @@ int MainWindow::deconvolve(){
         for (int chan = 0; chan < 2; chan++){
             // fill the time buffer
             for (int i = 0; i<irfftsize; i++){
-                if (i <= out.getNumSamplesPerChannel()){
+                if (i <= out.getNumSamplesPerChannel()-1){
                     ir_timebuffer[i] = out.samples[chan][i];
                 } else {
                     ir_timebuffer[i] = 0;
