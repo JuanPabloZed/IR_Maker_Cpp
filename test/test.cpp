@@ -1,6 +1,6 @@
 #include <iostream>
 #include <audiofile.h>
-#include "cpp/pocketfft_hdronly.h"
+#include "fftw/fftw3.h"
 using std::cout, std::endl, std::cin;
 
 int main(){
