@@ -1,11 +1,7 @@
 #include <iostream>
-#include <audiofile.h>
+#include <vector>
 #include "fftw/fftw3.h"
-// using std::cout, std::endl, std::cin;
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <cmath>
 
 // Fonction pour créer un signal sinusoïdal
 void generate_signal(std::vector<double>& signal, int n, double frequency, double sample_rate) {
