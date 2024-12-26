@@ -5,11 +5,13 @@
 #include "sweepgenerator.h"
 
 #include "AudioFile.h"
+#include "fftw/fftw3.h"
 
 extern "C"{
 #include "pffft.h"
 #include "pffft.c"
 }
+
 
 #include <QPushButton>
 #include <QFileDialog>
