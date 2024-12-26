@@ -6,12 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set path to FFTW include directory (replace with actual path)
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/fftw"
-                    "${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/fftw")
 
 # Set path to FFTW library directory (replace with actual path)
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}/fftw")
-set(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+
 # Add executable
 add_executable(test test.cpp)
 
