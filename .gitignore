@@ -39,4 +39,4 @@ bin*
 .vscode
 
 # CMakeLists.user files
-CMakeLists.txt.user*
+*.user
