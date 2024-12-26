@@ -1,7 +1,8 @@
 #include <iostream>
 #include <audiofile.h>
-#include <fftw/fftw3.h>
+#include "fftw/fftw3.h"
 // using std::cout, std::endl, std::cin;
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -15,9 +16,9 @@ void generate_signal(std::vector<double>& signal, int n, double frequency, doubl
 
 int main() {
     // Paramètres du signal
-    const double sample_rate = 44100.0; // Fréquence d'échantillonnage en Hz
-    const double signal_freq = 500.0;   // Fréquence du signal sinusoïdal en Hz
-    const int N = 32768;           // Nombre d'échantillons
+    const int N = 1024;           // Nombre d'échantillons
+    const double sample_rate = 1000.0; // Fréquence d'échantillonnage en Hz
+    const double signal_freq = 50.0;   // Fréquence du signal sinusoïdal en Hz
 
     // Signal en entrée (réel)
     std::vector<double> signal(N);
@@ -43,7 +44,7 @@ int main() {
 
     // Affichage des résultats
     std::cout << "Spectre de fréquence :\n";
-    for (int i = 0; i < N/2; ++i) {
+    for (int i = 0; i < N; ++i) {
         double real = out[i][0];
         double imag = out[i][1];
         double magnitude = std::sqrt(real * real + imag * imag);
