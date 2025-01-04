@@ -5,7 +5,6 @@
 #include "sweepgenerator.h"
 
 #include "AudioFile.h"
-#include "fftw/fftw3.h"
 
 extern "C"{
 #include "pffft.h"
@@ -556,14 +555,6 @@ int MainWindow::deconvolve(){
         pffft_zconvolve_accumulate(fftsetup, invess_freqbuffer, rec_freqbuffer, out_freqbuffer, 1.0); // manually scale after operation
         // get output spectrum
         float *temp = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        // pffft_zreorder(fftsetup, out_freqbuffer, temp, PFFFT_FORWARD);
-        // std::vector<float> outtemp;
-        // for (int i = 0; i < fftsize; i++){
-        //     outtemp.push_back(temp[i]);
-        // }
-
-        // out_spectrum.push_back(outtemp);
-        //- backwards fft
         // use rec buffers since they won't be used anymore and are the right size
         pffft_transform(fftsetup, out_freqbuffer, rec_timebuffer, work, PFFFT_BACKWARD);
         //- write in audio file
@@ -607,7 +598,7 @@ int MainWindow::deconvolve(){
 
     // trim right side for cab IRs
     // also trim right side because cab IRs have to be short
-    double thresh = 0.0005;
+    double thresh = 0.00045;
     int cutlength = out.getNumSamplesPerChannel()-1;
     bool threshhit = false;
     if (ui->CutTailBox->isChecked()){
@@ -627,7 +618,7 @@ int MainWindow::deconvolve(){
         {
             out.samples[chan].erase(out.samples[chan].begin(), std::next(out.samples[chan].begin(), invessSize - (ui->srate->text().toInt()*0.2)));
         }
-        double thresh = 0.005;
+        double thresh = 0.0045;
         bool threshhit = false;
         int cutlength = 0;
         if (out.isMono()){
@@ -639,18 +630,6 @@ int MainWindow::deconvolve(){
                 }
             }
             out.samples[0].erase(out.samples[0].begin(), std::next(out.samples[0].begin(), cutlength));
-            // also trim right side because cab IRs have to be short
-            // thresh = 0.0005;
-            // cutlength = out.samples[0].size();
-            // threshhit = false;
-            // while (!threshhit){
-            //     if (std::abs(out.samples[0][cutlength]) > thresh){
-            //         threshhit = true;
-            //     } else {
-            //         cutlength--;
-            //     }
-            // }
-            // out.samples[0].erase(std::next(out.samples[0].begin(), cutlength), out.samples[0].end());
 
         } else if (out.isStereo()){
             while (!threshhit){
@@ -665,7 +644,7 @@ int MainWindow::deconvolve(){
             out.samples[1].erase(out.samples[1].begin(), std::next(out.samples[1].begin(), cutlength));
         }
 
-        // trim right side if wanted by the user
+        // custom trim right side if wanted by the user
         if (ui->irlengthbox->isChecked()){
             if (ui->irlength->text() == ""){
                 QMessageBox::critical(this, "No IR length provided", "Please specify the desired length of your IR, or uncheck the \"Custom IR Length\" option.");
@@ -708,8 +687,8 @@ int MainWindow::deconvolve(){
     pffft_zreorder(irsetup, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
     // prepare spectrum to be sent in out_spectrum
     std::vector<float> irfreq;
-    for (int i = 0; i < irfftsize; i++){
-        irfreq.push_back(ir_freqbuffer[i]);
+    for (int i = 1; i <= irfftsize/2; i++){
+        irfreq.push_back(sqrt(ir_freqbuffer[2*i]*ir_freqbuffer[2*i] + ir_freqbuffer[2*i+1]*ir_freqbuffer[2*i+1]));
     }
     out_spectrum.push_back(irfreq);
     }
@@ -729,8 +708,8 @@ int MainWindow::deconvolve(){
             pffft_zreorder(irsetup, ir_freqbuffer, ir_tempbuffer, PFFFT_FORWARD);
             // prepare spectrum to be sent in out_spectrum
             std::vector<float> irfreq;
-            for (int i = 0; i < irfftsize; i++){
-                irfreq.push_back(ir_freqbuffer[i]);
+            for (int i = 1; i <= irfftsize/2; i++){
+                irfreq.push_back(sqrt(ir_freqbuffer[2*i]*ir_freqbuffer[2*i] + ir_freqbuffer[2*i+1]*ir_freqbuffer[2*i+1]));
             }
             out_spectrum.push_back(irfreq);
         }
@@ -982,8 +961,9 @@ void MainWindow::on_createir_button_clicked()
         std::vector<double> ytemp;
         for (int i = 0; i < fftsize/2; i++){
             xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
-            ytemp.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
+            ytemp.push_back(20*log10(out_spectrum[0][i]));
         }
+        double min = *std::min_element(ytemp.begin(), ytemp.end());
         double freqmax = *std::max_element(ytemp.begin(), ytemp.end());
         for (int i = 0; i < fftsize/2; i++){
             yfreq.push_back(ytemp[i] - freqmax);
@@ -991,7 +971,7 @@ void MainWindow::on_createir_button_clicked()
         ui->freq_plot->addGraph()->setData(xfreq, yfreq);
         ui->freq_plot->graph(0)->rescaleAxes();
         ui->freq_plot->xAxis->setRange(20, 22000);
-        ui->freq_plot->yAxis->setRange(0,-120);
+        ui->freq_plot->yAxis->setRange(0,1.1*min);
         ui->freq_plot->graph(0)->setPen(graphsPen);
 
         ui->freq_plot->replot();
@@ -1010,8 +990,8 @@ void MainWindow::on_createir_button_clicked()
         std::vector<double> ytempR;
         for (int i = 0; i < fftsize/2; i++){
             xfreq.push_back(i * (out.getSampleRate()/(float)fftsize));
-            ytempL.push_back(20*log10(sqrt(out_spectrum[0][2*i]*out_spectrum[0][2*i] + out_spectrum[0][2*i + 1]*out_spectrum[0][2*i + 1])));
-            ytempR.push_back(20*log10(sqrt(out_spectrum[1][2*i]*out_spectrum[1][2*i] + out_spectrum[1][2*i + 1]*out_spectrum[1][2*i + 1])));
+            ytempL.push_back(20*log10(out_spectrum[0][i]));
+            ytempR.push_back(20*log10(out_spectrum[1][i]));
         }
         double freqmaxL = *std::max_element(ytempL.begin(), ytempL.end());
         double freqmaxR = *std::max_element(ytempR.begin(), ytempR.end());

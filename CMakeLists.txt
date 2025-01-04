@@ -45,7 +45,6 @@ endif()
 
 target_link_libraries(IR_Maker PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt6::PrintSupport)
 target_link_libraries(IR_Maker PRIVATE Qt6::Multimedia)
-target_link_libraries(IR_Maker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/fftw/libfftw3-3.lib)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -62,13 +61,6 @@ set_target_properties(IR_Maker PROPERTIES
 )
 
 set(EXECUTABLE_OUTPUT_PATH "../../bin")
-
-add_custom_command(TARGET IR_Maker POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/fftw/libfftw3-3.dll"
-        "${EXECUTABLE_OUTPUT_PATH}/libfftw3-3.dll"
-)
-
 
 include(GNUInstallDirs)
 install(TARGETS IR_Maker
