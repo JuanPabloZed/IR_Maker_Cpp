@@ -471,9 +471,6 @@ void MainWindow::convolvetest(){
 
 int MainWindow::deconvolve(){
 
-    // directly assign the number of output channels
-    out.setNumChannels(recording.getNumChannels());
-
     // create invess
     std::vector<float> invess_temp(sweep.getNumSamplesPerChannel());
     double k;
@@ -496,82 +493,73 @@ int MainWindow::deconvolve(){
     { fftsize <<= (int)(log2(recSize - 1) + 1); }
     else { fftsize <<= (int)(log2(invessSize - 1) + 1); }
 
-
-    // resize the out buffer
+    // prepare out file format
+    out.setNumChannels(recording.getNumChannels());
     out.setNumSamplesPerChannel(fftsize);
-
-    // get necessary buffers
-    float *invess_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-    // frequency domain buffers
-    float *invess_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-    // work buffer for computation efficiency
-    float *workinvess = (float*) pffft_aligned_malloc(fftsize*sizeof(float));
-
-    // prepare the fft
-    PFFFT_Setup *fftsetup = pffft_new_setup(fftsize, PFFFT_REAL);
-
-    // fill & pad invess buffer since it's supposed to be a mono file
-    for (int i = 0; i < fftsize; i++)
+    out.setSampleRate(ui->srate->text().toInt());
+    switch(ui->bitdepth_combo->currentIndex())
     {
-        if (i < invessSize)
-        {   // fill
-            invess_timebuffer[i] = invess_temp[i];
-        } else
-        {   // pad
-            invess_timebuffer[i] = 0;
-        }
-    }
-    // fft the invess for same reason
-    pffft_transform(fftsetup, (const float *)invess_timebuffer, invess_freqbuffer, workinvess, PFFFT_FORWARD);
-    pffft_aligned_free(invess_timebuffer); // won't be needed anymore
-    pffft_aligned_free(workinvess); // won't be needed anymore
-
-
-    //* start of processing loop
-    for (int channel = 0; channel < recording.getNumChannels(); channel++)
-    {
-        // time buffer
-        float *rec_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        // freq & phase buffer
-        float *rec_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        float *out_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        // work buffer for computation efficiency
-        float *work = (float*) pffft_aligned_malloc(fftsize*sizeof(float));
-        // get the rec channel & pad the rest
-        for (int i = 0; i < fftsize; i++)
-        {
-            if (i < recSize)
-            {   // fill
-                rec_timebuffer[i] = recording.samples[channel][i];
-            }
-            else
-            {   // pad
-                rec_timebuffer[i] = 0;
-            }
-        }
-        //- forward fft
-        pffft_transform(fftsetup, (const float *)rec_timebuffer, rec_freqbuffer, work, PFFFT_FORWARD);
-        //- convolution
-        pffft_zconvolve_accumulate(fftsetup, invess_freqbuffer, rec_freqbuffer, out_freqbuffer, 1.0); // manually scale after operation
-        // get output spectrum
-        float *temp = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        // use rec buffers since they won't be used anymore and are the right size
-        pffft_transform(fftsetup, out_freqbuffer, rec_timebuffer, work, PFFFT_BACKWARD);
-        //- write in audio file
-        for (int i = 0; i < fftsize; i++)
-        {
-            out.samples[channel][i] = rec_timebuffer[i];
-        }
-
-        pffft_aligned_free(rec_timebuffer);
-        pffft_aligned_free(rec_freqbuffer);
-        pffft_aligned_free(out_freqbuffer);
-        pffft_aligned_free(work);
-        pffft_aligned_free(temp);
-
+    case 0: // 16 bits
+        out.setBitDepth(16);
+        break;
+    case 1: // 24 bits
+        out.setBitDepth(24);
+        break;
+    case 2: // 32bits
+        out.setBitDepth(32);
+        break;
     }
 
-    pffft_destroy_setup(fftsetup);
+    // begin FFT stuff
+    // preprare elements for FFT processing
+    PFFFT_Setup *setup = pffft_new_setup(fftsize, PFFFT_REAL);
+    float *invessbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *invessbufferF = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *recbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *recbufferF = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *outbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *outbufferF = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *work = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    // fill temporal buffer
+    for (int i=0; i < fftsize; i++){
+        if (i < invessSize){
+            invessbuffer[i] = invess_temp[i];
+        } else { // and pad
+            invessbuffer[i] = 0;
+        }
+    }
+    // get spectrum for convolution
+    pffft_transform(setup, invessbuffer, invessbufferF, work, PFFFT_FORWARD);
+
+    // convolve each channel of rec with invess
+    for (int chan = 0; chan < recording.getNumChannels(); chan++){
+        // fill and pad buffer
+        for (int i=0; i < fftsize; i++){
+            if (i < recording.getNumSamplesPerChannel()){
+                recbuffer[i] = recording.samples[chan][i];
+            } else {
+                recbuffer[i] = 0;
+            }
+        }
+        // do convolution
+        pffft_transform(setup, recbuffer, recbufferF, work, PFFFT_FORWARD);
+        pffft_zconvolve_accumulate(setup, recbufferF, invessbufferF, outbufferF, 1/((float)fftsize));
+        pffft_transform(setup, outbufferF, outbuffer, work, PFFFT_BACKWARD);
+        // fill output with result
+        for (int i=0; i < fftsize; i++){
+            out.samples[chan][i] = outbuffer[i];
+        }
+    }
+    // clean FFT elements, no longer useful
+    pffft_destroy_setup(setup);
+    pffft_aligned_free(invessbuffer);
+    pffft_aligned_free(invessbufferF);
+    pffft_aligned_free(recbuffer);
+    pffft_aligned_free(recbufferF);
+    pffft_aligned_free(outbuffer);
+    pffft_aligned_free(outbufferF);
+    pffft_aligned_free(work);
+
     //- normalize
     // get absolute maximum
     std::vector<double> maxs;
@@ -593,8 +581,6 @@ int MainWindow::deconvolve(){
         }
     }
 
-    //- destroy buffers
-    pffft_aligned_free(invess_freqbuffer);
 
     // trim right side for cab IRs
     // also trim right side because cab IRs have to be short
@@ -669,26 +655,24 @@ int MainWindow::deconvolve(){
     int irfftsize = 1 << (int)(log2(out.getNumSamplesPerChannel() - 1) + 1);
     PFFFT_Setup *irsetup = pffft_new_setup(irfftsize, PFFFT_REAL);
     // necessary buffers
-    float *ir_timebuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
-    float *ir_freqbuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
-    float *ir_tempbuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+    float *irbuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+    float *irwork= (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
     // mono IR
     if (out.isMono()){
     // fill the time buffer
     for (int i = 0; i<irfftsize; i++){
         if (i<out.getNumSamplesPerChannel()){
-            ir_timebuffer[i] = out.samples[0][i];
+            irbuffer[i] = out.samples[0][i];
         } else {
-            ir_timebuffer[i] = 0;
+            irbuffer[i] = 0;
         }
     }
-    // fft transform + reorder for easier processing
-    pffft_transform(irsetup, ir_timebuffer, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
-    pffft_zreorder(irsetup, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
+    // fft transform + reorder for custom processing
+    pffft_transform_ordered(irsetup, irbuffer, irbuffer, irwork, PFFFT_FORWARD);
     // prepare spectrum to be sent in out_spectrum
     std::vector<float> irfreq;
     for (int i = 1; i <= irfftsize/2; i++){
-        irfreq.push_back(sqrt(ir_freqbuffer[2*i]*ir_freqbuffer[2*i] + ir_freqbuffer[2*i+1]*ir_freqbuffer[2*i+1]));
+        irfreq.push_back(sqrt(irbuffer[2*i]*irbuffer[2*i] + irbuffer[2*i+1]*irbuffer[2*i+1]));
     }
     out_spectrum.push_back(irfreq);
     }
@@ -697,28 +681,26 @@ int MainWindow::deconvolve(){
         for (int chan = 0; chan < 2; chan++){
             // fill the time buffer
             for (int i = 0; i<irfftsize; i++){
-                if (i <= out.getNumSamplesPerChannel()-1){
-                    ir_timebuffer[i] = out.samples[chan][i];
+                if (i < out.getNumSamplesPerChannel()){
+                    irbuffer[i] = out.samples[chan][i];
                 } else {
-                    ir_timebuffer[i] = 0;
+                    irbuffer[i] = 0;
                 }
             }
-            // fft transform + reorder for easier processing
-            pffft_transform(irsetup, ir_timebuffer, ir_tempbuffer, ir_freqbuffer, PFFFT_FORWARD);
-            pffft_zreorder(irsetup, ir_freqbuffer, ir_tempbuffer, PFFFT_FORWARD);
+            // fft transform + reorder for custom processing
+            pffft_transform_ordered(irsetup, irbuffer, irbuffer, irwork, PFFFT_FORWARD);
             // prepare spectrum to be sent in out_spectrum
             std::vector<float> irfreq;
             for (int i = 1; i <= irfftsize/2; i++){
-                irfreq.push_back(sqrt(ir_freqbuffer[2*i]*ir_freqbuffer[2*i] + ir_freqbuffer[2*i+1]*ir_freqbuffer[2*i+1]));
+                irfreq.push_back(sqrt(irbuffer[2*i]*irbuffer[2*i] + irbuffer[2*i+1]*irbuffer[2*i+1]));
             }
             out_spectrum.push_back(irfreq);
         }
     }
     // destroy fft variables
     pffft_destroy_setup(irsetup);
-    pffft_aligned_free(ir_timebuffer);
-    pffft_aligned_free(ir_freqbuffer);
-    pffft_aligned_free(ir_tempbuffer);
+    pffft_aligned_free(irbuffer);
+    pffft_aligned_free(irwork);
 
     return irfftsize;
 }
@@ -849,24 +831,6 @@ void MainWindow::on_createir_button_clicked()
             ui->srate->setText(QString::number(recording.getSampleRate()));
         }
         fftsize = this->deconvolve();
-        out.setSampleRate(ui->srate->text().toInt());
-
-
-
-        // bit depth
-        switch(ui->bitdepth_combo->currentIndex())
-        {
-        case 0: // 16 bits
-            out.setBitDepth(16);
-            break;
-        case 1: // 24 bits
-            out.setBitDepth(24);
-            break;
-        case 2: // 32bits, need to create another AudioFile element to prevent floating point conversion
-            out.setBitDepth(32);
-
-            break;
-        }
 
         // fill the output file with buffer data
 
