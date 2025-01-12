@@ -222,19 +222,24 @@ void MainWindow::convolvetest(){
     else { fftsize <<= (int)(log2(irSize - 1) + 1); }
 
     testwet.setNumSamplesPerChannel(fftsize);
+    testwet.setNumChannels(testfile.getNumChannels());
+    testwet.setSampleRate(testfile.getSampleRate());
+    testwet.setBitDepth(24);
 
-    PFFFT_Setup *fftsetup = pffft_new_setup(fftsize, PFFFT_REAL);
+    PFFFT_Setup *fftsetup = pffft_new_setup(fftsize, PFFFT_REAL);    
     // CASES FOR IR FORMAT
     // Mono IR
     if (out.isMono()){
         // prepare wet test file
-        testwet.setNumChannels(testfile.getNumChannels());
         // create buffers + work buffer
-        float *test_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        float *test_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        float *wet_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-        float *work = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+        float *test_buffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
         float *ir_buffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+
+        float *test_bufferF = (float *) pffft_aligned_malloc((fftsize+2) * sizeof(float));
+        float *ir_bufferF = (float *) pffft_aligned_malloc((fftsize+2) * sizeof(float));
+        float *wet_bufferF = (float *) pffft_aligned_malloc((fftsize+2) * sizeof(float));
+
+        float *work = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
         // fill ir buffer
         // one ir channel so just compute it now
         for(int i = 0; i < fftsize; i++){
@@ -246,42 +251,34 @@ void MainWindow::convolvetest(){
                 ir_buffer[i] = 0;
             }
         }
-        pffft_transform(fftsetup, ir_buffer, ir_buffer, work, PFFFT_FORWARD);
+        pffft_transform(fftsetup, ir_buffer, ir_bufferF, work, PFFFT_FORWARD);
         // process loop
         for (int channel = 0; channel < testfile.getNumChannels(); channel++){
             // fill & pad time buffers
             for (int i = 0; i < fftsize; i++){
                 // test file
-                if (i < testSize){
-                    // fill
-                    test_timebuffer[i] = testfile.samples[channel][i];
-                } else {
-                    // pad
-                    test_timebuffer[i] = 0;
+                if (i < testSize){ // fill
+                    test_buffer[i] = testfile.samples[channel][i];
+                } else { // pad
+                    test_buffer[i] = 0;
                 }
             }
             // forward fft
-            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
-
+            pffft_transform(fftsetup, test_buffer, test_bufferF, work, PFFFT_FORWARD);
             // convolution
-            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_buffer, wet_freqbuffer, 1.0);
-
-            // backwards fft (re-use test_timebuffer because no more needed anyway)
-            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            memset(wet_bufferF,0,(fftsize+2)*sizeof(float));
+            pffft_zconvolve_accumulate(fftsetup, test_bufferF, ir_bufferF, wet_bufferF, 1.0f/((float)fftsize));
+            // backwards fft (re-use test_buffer because no more needed anyway)
+            pffft_transform(fftsetup, wet_bufferF, test_buffer, work, PFFFT_BACKWARD);
 
             // write in audio file
             for(int i = 0; i < fftsize; i++){
-                testwet.samples[channel][i] = test_timebuffer[i];
-            }
-
-            // clear wet buffer before refill
-            for (int i = 0; i < fftsize; i++){
-                wet_freqbuffer[i] = 0;
+                testwet.samples[channel][i] = test_buffer[i];
             }
         }
-        pffft_aligned_free(test_timebuffer);
-        pffft_aligned_free(test_freqbuffer);
-        pffft_aligned_free(wet_freqbuffer);
+        pffft_aligned_free(test_buffer);
+        pffft_aligned_free(test_bufferF);
+        pffft_aligned_free(wet_bufferF);
         pffft_aligned_free(ir_buffer);
         pffft_aligned_free(work);
     }
@@ -293,6 +290,8 @@ void MainWindow::convolvetest(){
         // one buffer per channel
         float *ir_bufferL = (float *)pffft_aligned_malloc(fftsize*sizeof(float));
         float *ir_bufferR = (float *)pffft_aligned_malloc(fftsize*sizeof(float));
+        float *ir_bufferLF = (float *)pffft_aligned_malloc((fftsize+2)*sizeof(float));
+        float *ir_bufferRF = (float *)pffft_aligned_malloc((fftsize+2)*sizeof(float));
         // fill & pad buffers
         for(int i = 0; i< fftsize; i++){
             if (i < irSize){
@@ -304,111 +303,113 @@ void MainWindow::convolvetest(){
             }
         }
         // forward fft
-        pffft_transform(fftsetup, ir_bufferL, ir_bufferL, work, PFFFT_FORWARD);
-        pffft_transform(fftsetup, ir_bufferR, ir_bufferR, work, PFFFT_FORWARD);
+        pffft_transform(fftsetup, ir_bufferL, ir_bufferLF, work, PFFFT_FORWARD);
+        pffft_transform(fftsetup, ir_bufferR, ir_bufferRF, work, PFFFT_FORWARD);
         // mono testfile
         if (testfile.isMono()){
             // create buffers
-            float *test_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-            float *test_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-            float *wet_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *test_buffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *test_bufferF = (float *) pffft_aligned_malloc((fftsize+2) * sizeof(float));
+            float *wet_bufferF = (float *) pffft_aligned_malloc((fftsize+2) * sizeof(float));
             // fill & pad temporal buffer
             for (int i = 0; i < fftsize; i++){
                 if (i < testSize){
-                    test_timebuffer[i] = testfile.samples[0][i];
+                    test_buffer[i] = testfile.samples[0][i];
                 } else {
-                    test_timebuffer[i] = 0;
+                    test_buffer[i] = 0;
                 }
             }
             // forward fft
-            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, test_buffer, test_bufferF, work, PFFFT_FORWARD);
             // convolution + writing
             // left
-            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferL, wet_freqbuffer, 1.0);
+            memset(wet_bufferF, 0, (fftsize+2)*sizeof(float));
+            pffft_zconvolve_accumulate(fftsetup, test_bufferF, ir_bufferLF, wet_bufferF, 1.0f/((float)fftsize));
             // backwards fft
-            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            pffft_transform(fftsetup, wet_bufferF, test_buffer, work, PFFFT_BACKWARD);
             for (int i  = 0; i < fftsize; i++){
-                testwet.samples[0][i] = test_timebuffer[i];
-            }
-            // clear wet buffer before refill
-            for (int i = 0; i < fftsize; i++){
-                wet_freqbuffer[i] = 0;
+                testwet.samples[0][i] = test_buffer[i];
             }
             // right
-            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferR, wet_freqbuffer, 1.0);
+            memset(wet_bufferF, 0, (fftsize+2)*sizeof(float));
+            pffft_zconvolve_accumulate(fftsetup, test_bufferF, ir_bufferRF, wet_bufferF, 1.0f/((float)fftsize));
             // backwards fft
-            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            pffft_transform(fftsetup, wet_bufferF, test_buffer, work, PFFFT_BACKWARD);
             for (int i  = 0; i < fftsize; i++){
-                testwet.samples[1][i] = test_timebuffer[i];
+                testwet.samples[1][i] = test_buffer[i];
             }
             // delete buffers
-            pffft_aligned_free(test_timebuffer);
-            pffft_aligned_free(test_freqbuffer);
-            pffft_aligned_free(wet_freqbuffer);
+            pffft_aligned_free(test_buffer);
+            pffft_aligned_free(test_bufferF);
+            pffft_aligned_free(wet_bufferF);
         }
         // stereo testfile
         else if (testfile.isStereo()){
             // create buffers
-            float *test_timebuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-            float *test_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
-            float *wet_freqbuffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *test_buffer = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *test_bufferF = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
+            float *wet_bufferF = (float *) pffft_aligned_malloc(fftsize * sizeof(float));
             // LEFT
             // fill & pad temporal buffer
             for (int i = 0; i < fftsize; i++){
                 if (i < testSize){
-                    test_timebuffer[i] = testfile.samples[0][i];
+                    test_buffer[i] = testfile.samples[0][i];
                 } else {
-                    test_timebuffer[i] = 0;
+                    test_buffer[i] = 0;
                 }
             }
             // forward fft
-            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, test_buffer, test_bufferF, work, PFFFT_FORWARD);
             // convolution
-            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferL, wet_freqbuffer, 1.0);
+            memset(wet_bufferF,0,(fftsize+2)*sizeof(float));
+            pffft_zconvolve_accumulate(fftsetup, test_bufferF, ir_bufferLF, wet_bufferF, 1.0f/((float)fftsize));
             // backwards fft
-            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            pffft_transform(fftsetup, wet_bufferF, test_buffer, work, PFFFT_BACKWARD);
             for (int i  = 0; i < fftsize; i++){
-                testwet.samples[0][i] = test_timebuffer[i];
-            }
-            // clear wet buffer before refill
-            for (int i = 0; i < fftsize; i++){
-                wet_freqbuffer[i] = 0;
+                testwet.samples[0][i] = test_buffer[i];
             }
             // RIGHT
             // fill & pad temporal buffer
             for (int i = 0; i < fftsize; i++){
                 if (i < testSize){
-                    test_timebuffer[i] = testfile.samples[1][i];
+                    test_buffer[i] = testfile.samples[1][i];
                 } else {
-                    test_timebuffer[i] = 0;
+                    test_buffer[i] = 0;
                 }
             }
             // forward fft
-            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, test_buffer, test_bufferF, work, PFFFT_FORWARD);
             // convolution
-            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_bufferR, wet_freqbuffer, 1.0);
+            memset(wet_bufferF,0,(fftsize+2)*sizeof(float));
+            pffft_zconvolve_accumulate(fftsetup, test_bufferF, ir_bufferRF, wet_bufferF, 1.0f/((float)fftsize));
             // backwards fft
-            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            pffft_transform(fftsetup, wet_bufferF, test_buffer, work, PFFFT_BACKWARD);
             for (int i  = 0; i < fftsize; i++){
-                testwet.samples[1][i] = test_timebuffer[i];
+                testwet.samples[1][i] = test_buffer[i];
             }
             // delete buffers
-            pffft_aligned_free(test_timebuffer);
-            pffft_aligned_free(test_freqbuffer);
-            pffft_aligned_free(wet_freqbuffer);
+            pffft_aligned_free(test_buffer);
+            pffft_aligned_free(test_bufferF);
+            pffft_aligned_free(wet_bufferF);
         }
         pffft_aligned_free(work);
         pffft_aligned_free(ir_bufferL);
         pffft_aligned_free(ir_bufferR);
+        pffft_aligned_free(ir_bufferLF);
+        pffft_aligned_free(ir_bufferRF);
     }
     // MULTICHANNEL IR
     else {
         testwet.setNumChannels(out.getNumChannels());
         float *ir_buffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
-        float *test_timebuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
-        float *test_freqbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
-        float *wet_freqbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+        float *test_buffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+
+        float *ir_bufferF = (float *)pffft_aligned_malloc((fftsize+2) * sizeof(float));
+        float *test_bufferF = (float *)pffft_aligned_malloc((fftsize+2) * sizeof(float));
+        float *wet_bufferF = (float *)pffft_aligned_malloc((fftsize+2) * sizeof(float));
+
         float *work = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+
         for(int channel = 0; channel < out.getNumChannels(); channel++){
             // fill & pad for IR and testfile
             for (int i = 0; i < fftsize; i++){
@@ -418,39 +419,36 @@ void MainWindow::convolvetest(){
                     ir_buffer[i] = 0;
                 }
                 if (i < testSize){
-                    test_timebuffer[i] = testfile.samples[channel][i];
+                    test_buffer[i] = testfile.samples[channel][i];
                 } else {
-                    test_timebuffer[i] = 0;
+                    test_buffer[i] = 0;
                 }
             }
             // forward fft
-            pffft_transform(fftsetup, ir_buffer, ir_buffer, work, PFFFT_FORWARD);
-            pffft_transform(fftsetup, test_timebuffer, test_freqbuffer, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, ir_buffer, ir_bufferF, work, PFFFT_FORWARD);
+            pffft_transform(fftsetup, test_buffer, test_bufferF, work, PFFFT_FORWARD);
             // convolution
-            pffft_zconvolve_accumulate(fftsetup, test_freqbuffer, ir_buffer, wet_freqbuffer, 1.0);
-            // backwards fft
-            pffft_transform(fftsetup, wet_freqbuffer, test_timebuffer, work, PFFFT_BACKWARD);
+            memset(wet_bufferF,0,(fftsize+2)*sizeof(float));
+            pffft_zconvolve_accumulate(fftsetup, test_bufferF, ir_buffer, wet_bufferF, 1.0f/((float)fftsize));
+            pffft_transform(fftsetup, wet_bufferF, test_buffer, work, PFFFT_BACKWARD);
             // write
             for(int i = 0; i < fftsize; i++){
-                testwet.samples[channel][i] = test_timebuffer[i];
-            }
-            // clear wet buffer before refill
-            for (int i = 0; i < fftsize; i++){
-                wet_freqbuffer[i] = 0;
+                testwet.samples[channel][i] = test_buffer[i];
             }
         }
         // destroy buffers
         pffft_aligned_free(work);
         pffft_aligned_free(ir_buffer);
-        pffft_aligned_free(test_timebuffer);
-        pffft_aligned_free(test_freqbuffer);
-        pffft_aligned_free(wet_freqbuffer);
+        pffft_aligned_free(ir_bufferF);
+        pffft_aligned_free(test_buffer);
+        pffft_aligned_free(test_bufferF);
+        pffft_aligned_free(wet_bufferF);
     }
-
+    pffft_destroy_setup(fftsetup);
     // normalization
     std::vector<double> maxs;
     std::vector<double> mins;
-    for (int chan = 0; chan < out.getNumChannels(); chan++)
+    for (int chan = 0; chan < testwet.getNumChannels(); chan++)
     {
         maxs.push_back(*std::max_element(testwet.samples[chan].begin(), testwet.samples[chan].end()));
         mins.push_back(abs(*std::min_element(testwet.samples[chan].begin(), testwet.samples[chan].end())));
@@ -458,12 +456,13 @@ void MainWindow::convolvetest(){
     double max = *std::max_element(maxs.begin(), maxs.end());
     double min = *std::max_element(mins.begin(), mins.end());
     double absmax = std::max(max, min);
+    double invabsmax = 1/absmax;
     // normalize all output channels
     for (int channel = 0; channel < testwet.getNumChannels(); channel++)
     {
         for (int i = 0; i < testwet.getNumSamplesPerChannel(); i++)
         {
-            testwet.samples[channel][i] /= absmax;
+            testwet.samples[channel][i] *= invabsmax;
         }
     }
 
@@ -514,11 +513,12 @@ int MainWindow::deconvolve(){
     // preprare elements for FFT processing
     PFFFT_Setup *setup = pffft_new_setup(fftsize, PFFFT_REAL);
     float *invessbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
-    float *invessbufferF = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
     float *recbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
-    float *recbufferF = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
     float *outbuffer = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
-    float *outbufferF = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
+    float *invessbufferF = (float *)pffft_aligned_malloc((fftsize+2) * sizeof(float));
+    float *recbufferF = (float *)pffft_aligned_malloc((fftsize+2) * sizeof(float));
+    float *outbufferF = (float *)pffft_aligned_malloc((fftsize+2) * sizeof(float));
+
     float *work = (float *)pffft_aligned_malloc(fftsize * sizeof(float));
     // fill temporal buffer
     for (int i=0; i < fftsize; i++){
@@ -542,8 +542,9 @@ int MainWindow::deconvolve(){
             }
         }
         // do convolution
+        memset(outbufferF, 0, (fftsize+2) * sizeof(float)); // reset buffer because convolution op doesn't clean the output before writing in
         pffft_transform(setup, recbuffer, recbufferF, work, PFFFT_FORWARD);
-        pffft_zconvolve_accumulate(setup, recbufferF, invessbufferF, outbufferF, 1/((float)fftsize));
+        pffft_zconvolve_accumulate(setup, recbufferF, invessbufferF, outbufferF, 1.0f/((float)fftsize));
         pffft_transform(setup, outbufferF, outbuffer, work, PFFFT_BACKWARD);
         // fill output with result
         for (int i=0; i < fftsize; i++){
@@ -572,12 +573,13 @@ int MainWindow::deconvolve(){
     double max = *std::max_element(maxs.begin(), maxs.end());
     double min = *std::max_element(mins.begin(), mins.end());
     double absmax = std::max(max, min);
+    double invabsmax = 1/absmax;
     // normalize all output channels
     for (int channel = 0; channel < recording.getNumChannels(); channel++)
     {
         for (int i = 0; i < out.getNumSamplesPerChannel(); i++)
         {
-            out.samples[channel][i] /= absmax;
+            out.samples[channel][i] *= invabsmax;
         }
     }
 
@@ -656,25 +658,28 @@ int MainWindow::deconvolve(){
     PFFFT_Setup *irsetup = pffft_new_setup(irfftsize, PFFFT_REAL);
     // necessary buffers
     float *irbuffer = (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+    float *irbufferF = (float *) pffft_aligned_malloc((irfftsize+2) * sizeof(float));
     float *irwork= (float *) pffft_aligned_malloc(irfftsize * sizeof(float));
+
     // mono IR
     if (out.isMono()){
-    // fill the time buffer
-    for (int i = 0; i<irfftsize; i++){
-        if (i<out.getNumSamplesPerChannel()){
-            irbuffer[i] = out.samples[0][i];
-        } else {
-            irbuffer[i] = 0;
+        // fill the time buffer
+        for (int i = 0; i<irfftsize; i++){
+            if (i<out.getNumSamplesPerChannel()){
+                irbuffer[i] = out.samples[0][i];
+            } else {
+                irbuffer[i] = 0;
+            }
         }
-    }
-    // fft transform + reorder for custom processing
-    pffft_transform_ordered(irsetup, irbuffer, irbuffer, irwork, PFFFT_FORWARD);
-    // prepare spectrum to be sent in out_spectrum
-    std::vector<float> irfreq;
-    for (int i = 1; i <= irfftsize/2; i++){
-        irfreq.push_back(sqrt(irbuffer[2*i]*irbuffer[2*i] + irbuffer[2*i+1]*irbuffer[2*i+1]));
-    }
-    out_spectrum.push_back(irfreq);
+        // fft transform + reorder for custom processing
+        pffft_transform_ordered(irsetup, irbuffer, irbufferF, irwork, PFFFT_FORWARD);
+        // prepare spectrum to be sent in out_spectrum
+        std::vector<float> irfreq;
+        irfreq.reserve((irfftsize+2)/2);
+        for (int i = 0; i < (irfftsize+2)/2; i++){
+            irfreq.push_back(sqrt(irbufferF[2*i]*irbufferF[2*i] + irbufferF[2*i+1]*irbufferF[2*i+1]));
+        }
+        out_spectrum.push_back(irfreq);
     }
     // stereo IR
     else if (out.isStereo()){
@@ -688,11 +693,12 @@ int MainWindow::deconvolve(){
                 }
             }
             // fft transform + reorder for custom processing
-            pffft_transform_ordered(irsetup, irbuffer, irbuffer, irwork, PFFFT_FORWARD);
+            pffft_transform_ordered(irsetup, irbuffer, irbufferF, irwork, PFFFT_FORWARD);
             // prepare spectrum to be sent in out_spectrum
             std::vector<float> irfreq;
-            for (int i = 1; i <= irfftsize/2; i++){
-                irfreq.push_back(sqrt(irbuffer[2*i]*irbuffer[2*i] + irbuffer[2*i+1]*irbuffer[2*i+1]));
+            irfreq.reserve((irfftsize+2)/2);
+            for (int i = 0; i < (irfftsize+2)/2; i++){
+                irfreq.push_back(sqrt(irbufferF[2*i]*irbufferF[2*i] + irbufferF[2*i+1]*irbufferF[2*i+1]));
             }
             out_spectrum.push_back(irfreq);
         }
@@ -700,6 +706,7 @@ int MainWindow::deconvolve(){
     // destroy fft variables
     pffft_destroy_setup(irsetup);
     pffft_aligned_free(irbuffer);
+    pffft_aligned_free(irbufferF);
     pffft_aligned_free(irwork);
 
     return irfftsize;
@@ -1075,16 +1082,16 @@ void MainWindow::on_createir_button_clicked()
     ui->testsound->setEnabled(true);
 
     // tests for reconvolution of testfile
-    if (testfile.getNumChannels() > 2 && out.getNumChannels() <= 2){
+    if (testfile.getNumChannels() > 2 && out.getNumChannels() == 2){
         ui->testsound->setText("Browse test file");
         ui->testir->setEnabled(false);
-        QMessageBox::critical(this, "Multichannel test file for non_multichannel IR", "The selected file is multichannel, which cannot be used to test a non-multichannel IR. Please select a non-multichannel (i.e. mono or stereo) test file.");
+        QMessageBox::critical(this, "Multichannel test file for stereo IR", "The selected file is multichannel, which cannot be used to test a stereo IR. Please select a non-multichannel (i.e. mono or stereo) test file.");
         return;
     } else if (testfile.getLengthInSeconds() != 0 && testfile.getSampleRate() != out.getSampleRate()){
         ui->testsound->setText("Browse test file");
         ui->testir->setEnabled(false);
         return;
-    } else {
+    } else if (ui->testsound->text() != "Browse test file"){
         this->convolvetest();
         // save test wet
         testwet.setSampleRate(out.getSampleRate());
@@ -1283,7 +1290,7 @@ void MainWindow::on_playir_button_clicked()
     QSoundEffect *soundir = new QSoundEffect;
 
     soundir->setSource(QUrl::fromLocalFile(outuuidurl));
-    soundir->setVolume(1.0f);
+    soundir->setVolume(0.7f);
     soundir->play();
 
 }
@@ -1384,24 +1391,20 @@ void MainWindow::on_testsound_clicked()
         QMessageBox::StandardButton reply;
         reply = QMessageBox::warning(this, "Long test file", "Selected test file is more than a minute long. The longer your test file is, the longer it takes to compute it. Proceed anyways ?", QMessageBox::Yes|QMessageBox::No);
         if (reply == QMessageBox::No){
-            ui->testsound->setText("Browse test sound");
+            ui->testsound->setText("Browse test file");
             return;
         }
     }
-    // change button text to file name
-    if (testpath == ""){
-        ui->browseout_button->setText("Browse test sound");
-    } else {
-        QFileInfo testinfo(testpath);
-        QString testname(testinfo.baseName());
-        ui->testsound->setText(testname);
-    }
 
-    // convolution
+    // convolution & truncate test file
     if (testfile.getLengthInSeconds() > 10){
         testfile.setNumSamplesPerChannel(10*testfile.getSampleRate());
     }
     this->convolvetest();
+    // change button text to file name
+    QFileInfo testinfo(testpath);
+    QString testname(testinfo.baseName());
+    ui->testsound->setText(testname);
     // save test wet
     testwet.setSampleRate(out.getSampleRate());
     testwet.setBitDepth(24);
@@ -1427,7 +1430,7 @@ void MainWindow::on_testir_clicked()
         return;
     } else {
         wetsound->setSource(QUrl::fromLocalFile(testuuidurl));
-        wetsound->setVolume(1.0f);
+        wetsound->setVolume(0.7f);
         wetsound->play();
         return;
     }

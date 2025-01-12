@@ -988,7 +988,7 @@ folder in recordings folder)</string>
              <cursorShape>PointingHandCursor</cursorShape>
             </property>
             <property name="text">
-             <string>Browse test sound</string>
+             <string>Browse test file</string>
             </property>
            </widget>
           </item>

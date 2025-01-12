@@ -27,15 +27,15 @@ add_compile_options(/Zc:__cplusplus
                     /MP5
                     )
 
-    qt_add_executable(IR_Maker
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        about.h about.cpp about.ui
-        add.qrc
-        sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
-        qcustomplot.cpp
-        icon.o
-    )
+qt_add_executable(IR_Maker
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES}
+    about.h about.cpp about.ui
+    add.qrc
+    sweepgenerator.h sweepgenerator.cpp sweepgenerator.ui
+    qcustomplot.cpp
+    icon.o
+)
 
 target_link_libraries(IR_Maker PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt6::PrintSupport)
 target_link_libraries(IR_Maker PRIVATE Qt6::Multimedia)
