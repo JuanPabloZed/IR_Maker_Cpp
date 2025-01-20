@@ -2,8 +2,6 @@ C++ implementation of my python project [https://github.com/JuanPabloZed/IR_Make
 
 Does the same thing as Voxengo's Deconvolver (https://www.voxengo.com/product/deconvolver/), but for free and with more features (IR visualisation, a nice interface...).
 
-Contact : nathan.zwahlen70@gmail.com
-
 ## TO INSTALL A NEWER VERSION
 Go to your IR Maker installation folder (where you chose to install it with the setup executable, mostly in Program Files or Program Files (x86)), and run the unins0000.exe to uninstall previous version. Then, get the latest release on this github and run it !
 
